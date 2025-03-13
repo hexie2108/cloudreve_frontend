@@ -45,7 +45,7 @@ import {
 import Auth from "../../middleware/Auth";
 import API from "../../middleware/Api";
 import FileTag from "./FileTags";
-import { Assignment, Devices, MoreHoriz, Settings } from "@material-ui/icons";
+import { Assignment, Devices, MoreHoriz, Settings, Chat } from "@material-ui/icons";
 import Divider from "@material-ui/core/Divider";
 import SubActions from "../FileManager/Navigator/SubActions";
 import {
@@ -513,6 +513,22 @@ class NavbarCompoment extends Component {
                                         </ListItem>
                                     </>
                                 )}
+                                <ListItem
+                                    button
+                                    key="QQ群"
+                                    onClick={() =>
+                                        window.open("https://qm.qq.com/q/jSWXsgRMze", "_blank")
+                                    }
+                                >
+                                    <ListItemIcon>
+                                        <Chat
+                                            className={classes.iconFix}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="QQ用户群 867668772"
+                                    />
+                                </ListItem>
                             </List>
                         </div>
                         <div>
