@@ -1,10 +1,15 @@
 $(function () {
 
-    //在分享文件页面 显示加速器广告
-    print_vpn_on_share_file();
+        setTimeout(function() {
 
-    //在分享文件夹的页面 显示加速器广告
-    print_vpn_on_share_folder();
+        //在分享文件页面 显示加速器广告
+        print_vpn_on_share_file();
+        //在分享文件夹的页面 显示加速器广告
+        print_vpn_on_share_folder();
+
+    }, 2000); // 延时 2 秒后执行
+
+
     
 });
 
@@ -30,7 +35,7 @@ function print_vpn_on_share_file() {
     const index = Math.floor(Math.random() * max_number);
 
     //如果随机数大于2，则不显示广告
-    if (index > 2) {
+    if (index > 1) {
         console.log('不显示广告');
         return;
     }
@@ -91,7 +96,7 @@ function print_vpn_on_share_folder() {
     const index = Math.floor(Math.random() * max_number);
 
     //如果随机数大于2，则不显示广告
-    if (index > 2) {
+    if (index > 1) {
         console.log('不显示广告');
         return;
     }
