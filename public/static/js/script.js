@@ -14,10 +14,12 @@ $(function () {
  */
 function print_vpn_on_share_file() {
 
+    console.log('判断是否显示广告');
 
     const $box_content_element = $('.shared-file .box-content');
     //如果没有找到元素，则不显示广告
     if ($box_content_element.length === 0) {
+        console.log('没有找到广告定位元素');
         return;
     }
 
@@ -29,6 +31,7 @@ function print_vpn_on_share_file() {
 
     //如果随机数大于2，则不显示广告
     if (index > 2) {
+        console.log('不显示广告');
         return;
     }
 
@@ -72,10 +75,12 @@ function print_vpn_on_share_file() {
  */
 function print_vpn_on_share_folder() {
 
+    console.log('判断是否显示广告');
 
     const $explorer_container = $('.shared-folder #explorer-container');
     //如果没有找到元素，则不显示广告
     if ($explorer_container.length === 0) {
+        console.log('没有找到广告定位元素');
         return;
     }
 
@@ -87,6 +92,7 @@ function print_vpn_on_share_folder() {
 
     //如果随机数大于2，则不显示广告
     if (index > 2) {
+        console.log('不显示广告');
         return;
     }
 
