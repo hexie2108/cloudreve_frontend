@@ -101,7 +101,7 @@ class SharedFolderComponent extends Component {
         const id = this.props.anchorEl !== null ? "simple-popover" : undefined;
 
         return (
-            <div className={classes.layout}>
+            <div className={`${classes.layout} shared-folder`}>
                 <ClickAwayListener onClickAway={this.handleClickAway}>
                     <Paper className={classes.managerContainer}>
                         <FileManager isShare share={this.props.share} />

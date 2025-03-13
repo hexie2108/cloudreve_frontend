@@ -234,13 +234,13 @@ class SharedFileCompoment extends Component {
     render() {
         const { classes, t } = this.props;
         return (
-            <div className={classes.layout}>
+            <div className={`${classes.layout} shared-file`}>
                 <Modals />
                 <ImgPreview />
                 <div className={classes.box}>
                     <Creator share={this.props.share} />
                     <Divider />
-                    <div className={classes.boxContent}>
+                    <div className={`${classes.boxContent} box-content`}>
                         <TypeIcon
                             className={classes.icon}
                             isUpload
@@ -256,9 +256,13 @@ class SharedFileCompoment extends Component {
                         </div>
                     </div>
                     <Divider />
-                    <div className={classes.boxFooter}>
+                    <div className={`${classes.boxFooter} box-footer`}>
+
                         <div className={classes.actionLeft}>
-                            {this.props.share.preview && (
+                            
+                            {
+                            //使用 false 隐藏预览按钮
+                            false && this.props.share.preview && (
                                 <Button
                                     variant="outlined"
                                     color="secondary"
