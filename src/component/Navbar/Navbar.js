@@ -515,7 +515,7 @@ class NavbarCompoment extends Component {
                                 )}
                                 <ListItem
                                     button
-                                    key="QQ群"
+                                    key="电报群"
                                     onClick={() =>
                                         window.open("https://t.me/+P-yHB5lc_N5jNDM0", "_blank")
                                     }
@@ -565,6 +565,22 @@ class NavbarCompoment extends Component {
                                 <ListItemText primary={t("login.signUp")} />
                             </ListItem>
                         )}
+                        <ListItem
+                            button
+                            key="电报群"
+                            onClick={() =>
+                                window.open("https://t.me/+P-yHB5lc_N5jNDM0", "_blank")
+                            }
+                        >
+                            <ListItemIcon>
+                                <Chat
+                                    className={classes.iconFix}
+                                />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary="Telegram用户群"
+                            />
+                        </ListItem>
                     </div>
                 )}
             </div>
