@@ -517,7 +517,7 @@ class NavbarCompoment extends Component {
                                     button
                                     key="QQ群"
                                     onClick={() =>
-                                        window.open("https://qm.qq.com/q/jSWXsgRMze", "_blank")
+                                        window.open("https://t.me/+P-yHB5lc_N5jNDM0", "_blank")
                                     }
                                 >
                                     <ListItemIcon>
@@ -526,7 +526,7 @@ class NavbarCompoment extends Component {
                                         />
                                     </ListItemIcon>
                                     <ListItemText
-                                        primary="QQ用户群 867668772"
+                                        primary="Telegram用户群"
                                     />
                                 </ListItem>
                             </List>
