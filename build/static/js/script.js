@@ -1,11 +1,17 @@
 $(function () {
 
-    //在分享文件页面 显示加速器广告
-    print_vpn_on_share_file();
+        setTimeout(function() {
 
-    //在分享文件夹的页面 显示加速器广告
-    print_vpn_on_share_folder();
-    
+        //在分享文件页面 显示加速器广告
+        print_vpn_on_share_file();
+        //在分享文件夹的页面 显示加速器广告
+        print_vpn_on_share_folder();
+
+    }, 1000); // 延时 1 秒后执行
+
+
+    //重定向域名
+    redirect_old_domain();
 });
 
 
@@ -14,10 +20,19 @@ $(function () {
  */
 function print_vpn_on_share_file() {
 
+    console.log('判断是否显示广告');
 
     const $box_content_element = $('.shared-file .box-content');
     //如果没有找到元素，则不显示广告
     if ($box_content_element.length === 0) {
+        console.log('没有找到广告定位元素');
+
+        //如果是第一次没找到元素，则2秒后再重试一次
+        if(!print_vpn_on_share_file.retry){
+            print_vpn_on_share_file.retry = true;
+            setTimeout(print_vpn_on_share_file, 2000);
+        }
+
         return;
     }
 
@@ -28,7 +43,8 @@ function print_vpn_on_share_file() {
     const index = Math.floor(Math.random() * max_number);
 
     //如果随机数大于2，则不显示广告
-    if (index > 2) {
+    if (index > 1) {
+        console.log('不显示广告');
         return;
     }
 
@@ -72,10 +88,18 @@ function print_vpn_on_share_file() {
  */
 function print_vpn_on_share_folder() {
 
+    console.log('判断是否显示广告');
 
     const $explorer_container = $('.shared-folder #explorer-container');
     //如果没有找到元素，则不显示广告
     if ($explorer_container.length === 0) {
+        console.log('没有找到广告定位元素');
+
+         //如果是第一次没找到元素，则2秒后再重试一次
+         if(!print_vpn_on_share_folder.retry){
+            print_vpn_on_share_folder.retry = true;
+            setTimeout(print_vpn_on_share_folder, 2000);
+        }
         return;
     }
 
@@ -86,7 +110,8 @@ function print_vpn_on_share_folder() {
     const index = Math.floor(Math.random() * max_number);
 
     //如果随机数大于2，则不显示广告
-    if (index > 2) {
+    if (index > 1) {
+        console.log('不显示广告');
         return;
     }
 
@@ -132,4 +157,25 @@ function print_vpn_on_share_folder() {
     //把广告元素插入到 容器内部第一的位置
     $explorer_container.prepend($pub);
     $explorer_container.prepend($pub_phone);
+}
+
+
+/**
+ * 重定向旧域名
+ */
+function redirect_old_domain() {
+
+    const domain_list = {
+        pan_mikuclub_work: 'pan.mikuclub.work',
+        mikupan_vip: 'mikupan.vip',
+    }
+
+    //如果是 pan.mikuclub.work 域名，则跳转到 www.mikuclub.win
+    const domain = window.location.host;
+    if (domain === domain_list.pan_mikuclub_work) {
+        
+        const url = location.href
+        .replace(domain_list.pan_mikuclub_work, domain_list.mikupan_vip);
+        location.replace(url);
+    }
 }
