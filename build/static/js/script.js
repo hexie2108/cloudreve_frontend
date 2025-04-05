@@ -2,6 +2,12 @@ $(function () {
 
         setTimeout(function() {
 
+
+        //在分享文件的页面 显示alert消息
+        show_info_alert_on_share_file();
+        //在分享文件夹的页面 显示alert消息
+        show_info_alert_on_share_folder();
+
         //在分享文件页面 显示加速器广告
         print_vpn_on_share_file();
         //在分享文件夹的页面 显示加速器广告
@@ -158,6 +164,71 @@ function print_vpn_on_share_folder() {
     $explorer_container.prepend($pub);
     $explorer_container.prepend($pub_phone);
 }
+
+
+
+/**
+ * 创建alert元素
+ * 
+ * @returns {jQuery}
+ */
+function create_alert_element(){
+
+    return $(`
+        <div class="alert alert-info fw-bold rounded-0 text-center">
+            如果无法下载文件, 请使用VPN并开启全局模式
+        </div>
+    `);
+
+}
+
+/**
+ * 在分享文件的页面 显示alert消息
+ */
+function show_info_alert_on_share_file(){
+
+    const $box_content_element = $('.shared-file .box-content');
+    //如果没有找到元素，则不显示广告
+    if ($box_content_element.length === 0) {
+
+         //如果是第一次没找到元素，则2秒后再重试一次
+         if(!show_info_alert_on_share_file.retry){
+            show_info_alert_on_share_file.retry = true;
+            setTimeout(show_info_alert_on_share_file, 2000);
+        }
+        return;
+    }
+
+      //把广告元素插入到 box-content 元素之前
+    create_alert_element().insertBefore($box_content_element);
+
+
+
+
+}
+
+/**
+ * 在分享文件夹的页面 显示alert消息
+ */
+function show_info_alert_on_share_folder(){
+
+    const $shared_folder_element = $('.shared-folder');
+    //如果没有找到元素，则不显示广告
+    if ($shared_folder_element.length === 0) {
+
+         //如果是第一次没找到元素，则2秒后再重试一次
+         if(!show_info_alert_on_share_folder.retry){
+            show_info_alert_on_share_folder.retry = true;
+            setTimeout(show_info_alert_on_share_folder, 2000);
+        }
+        return;
+    }
+
+    $shared_folder_element.children().prepend(create_alert_element());
+
+
+}
+
 
 
 /**
