@@ -45,7 +45,7 @@ import {
 import Auth from "../../middleware/Auth";
 import API from "../../middleware/Api";
 import FileTag from "./FileTags";
-import { Assignment, Devices, MoreHoriz, Settings, Chat } from "@material-ui/icons";
+import { Assignment, Devices, MoreHoriz, Settings, Chat, InfoRounded } from "@material-ui/icons";
 import Divider from "@material-ui/core/Divider";
 import SubActions from "../FileManager/Navigator/SubActions";
 import {
@@ -529,6 +529,17 @@ class NavbarCompoment extends Component {
                                         primary="Telegram用户群"
                                     />
                                 </ListItem>
+                                <ListItem
+                                >
+                                    <ListItemIcon>
+                                        <InfoRounded
+                                            className={classes.iconFix}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="免费用户有10GB储存空间, 需要扩容空间可以加群联系管理员付费扩容"
+                                    />
+                                </ListItem>
                             </List>
                         </div>
                         <div>
@@ -579,6 +590,16 @@ class NavbarCompoment extends Component {
                             </ListItemIcon>
                             <ListItemText
                                 primary="Telegram用户群"
+                            />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemIcon>
+                                <InfoRounded
+                                    className={classes.iconFix}
+                                />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary="免费用户有10GB储存空间, 需要扩容空间可以加群后联系管理员付费扩容"
                             />
                         </ListItem>
                     </div>
