@@ -28,7 +28,7 @@ function print_vpn_on_share_file() {
 
     console.log('判断是否显示广告');
 
-    const $box_content_element = $('.shared-file .box-content');
+    const $box_content_element = $('.MuiContainer-root .MuiAvatar-root').parent();
     //如果没有找到元素，则不显示广告
     if ($box_content_element.length === 0) {
         console.log('没有找到广告定位元素');
@@ -84,7 +84,8 @@ function print_vpn_on_share_file() {
  `);
 
     //把广告元素插入到 box-content 元素之前
-    $pub.insertBefore($box_content_element);
+    // $pub.after($box_content_element);
+    $box_content_element.after($pub);
 
 }
 
