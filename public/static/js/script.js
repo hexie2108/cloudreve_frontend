@@ -3,15 +3,15 @@ $(function () {
         setTimeout(function() {
 
 
-        //在分享文件的页面 显示alert消息
-        show_info_alert_on_share_file();
-        //在分享文件夹的页面 显示alert消息
-        show_info_alert_on_share_folder();
-
         //在分享文件页面 显示加速器广告
         print_vpn_on_share_file();
         //在分享文件夹的页面 显示加速器广告
         print_vpn_on_share_folder();
+
+        //在分享文件的页面 显示alert消息
+        show_info_alert_on_share_file();
+        //在分享文件夹的页面 显示alert消息
+        show_info_alert_on_share_folder();
 
     }, 1000); // 延时 1 秒后执行
 
@@ -84,7 +84,7 @@ function print_vpn_on_share_file() {
         </div>
  `);
 
-    //把广告元素插入到 box-content 元素之前
+    //把广告元素插入到 box-content 元素之后
     // $pub.after($box_content_element);
     $box_content_element.after($pub);
 
@@ -179,7 +179,7 @@ function create_alert_element(){
 
     return $(`
         <div class="alert alert-info fw-bold rounded-0 text-center">
-            如果无法下载文件, 请使用VPN并开启全局模式
+            如果无法上传/下载文件, 请使用VPN并开启全局模式 | 相关问题可以到电报群内反馈 <a href="https://t.me/+P-yHB5lc_N5jNDM0" target="_blank" rel="nofollow">电报群链接</a> 
         </div>
     `);
 
@@ -190,7 +190,7 @@ function create_alert_element(){
  */
 function show_info_alert_on_share_file(){
 
-    const $box_content_element = $('.shared-file .box-content');
+    const $box_content_element = $('.MuiContainer-root .MuiAvatar-root').first().parent();
     //如果没有找到元素，则不显示广告
     if ($box_content_element.length === 0) {
 
@@ -203,8 +203,7 @@ function show_info_alert_on_share_file(){
     }
 
       //把广告元素插入到 box-content 元素之前
-    create_alert_element().insertBefore($box_content_element);
-
+    $box_content_element.before(create_alert_element());
 
 
 
@@ -215,9 +214,9 @@ function show_info_alert_on_share_file(){
  */
 function show_info_alert_on_share_folder(){
 
-    const $shared_folder_element = $('.shared-folder');
+    const $explorer_container = $('.fade-enter-done .MuiGrid-container').first().parent().parent();
     //如果没有找到元素，则不显示广告
-    if ($shared_folder_element.length === 0) {
+    if ($explorer_container.length === 0) {
 
          //如果是第一次没找到元素，则2秒后再重试一次
          if(!show_info_alert_on_share_folder.retry){
@@ -227,7 +226,7 @@ function show_info_alert_on_share_folder(){
         return;
     }
 
-    $shared_folder_element.children().prepend(create_alert_element());
+    $explorer_container.prepend(create_alert_element());
 
 
 }
