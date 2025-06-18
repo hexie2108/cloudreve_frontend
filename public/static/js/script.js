@@ -35,8 +35,8 @@ function print_vpn_image() {
         console.log('没有找到 导航栏元素');
 
         //如果是第一次没找到元素，则2秒后再重试一次
-        if (!print_vpn_image.retry) {
-            print_vpn_image.retry = true;
+        if ((print_vpn_image.retry || 0) < 3) {
+            print_vpn_image.retry = (print_vpn_image.retry || 0) + 1;
             setTimeout(print_vpn_image, 2000);
         }
         return;
@@ -125,9 +125,9 @@ function show_info_alert() {
     //如果没有找到元素，则不显示广告
     if ($top_bar_element.length === 0) {
 
-        //如果是第一次没找到元素，则2秒后再重试一次
-        if (!show_info_alert.retry) {
-            show_info_alert.retry = true;
+        //如果是第一次没找到元素，则2秒后再重试3次
+        if ((show_info_alert.retry || 0) < 3) {
+            show_info_alert.retry = (show_info_alert.retry || 0) + 1;
             setTimeout(show_info_alert, 2000);
         }
         return;
