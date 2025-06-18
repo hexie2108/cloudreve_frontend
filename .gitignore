@@ -10,7 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 # same build output folder as fe v3
-build
+
 dist-ssr
 dev-dist
 *.local
