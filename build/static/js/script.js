@@ -29,7 +29,7 @@ function print_vpn_image() {
     console.log('判断是否显示广告');
 
 
-    const $top_bar_element = $('main > .MuiStack-root .MuiStack-root');
+    const $top_bar_element = $('main > .MuiStack-root > .MuiStack-root');
     //如果没有找到元素，则不显示广告
     if ($top_bar_element.length === 0) {
         console.log('没有找到 导航栏元素');
@@ -76,7 +76,7 @@ function print_vpn_image() {
 
 
     const $pub = $(`
-        <div class="pop-banner d-none d-md-block border-bottom border-light-subtle py-2">
+        <div class="pop-banner d-none d-md-block border-bottom border-light-subtle rounded-4">
             <a title="加速器" href="${link}"  rel="nofollow" target="_blank">
                 <img class="img-fluid rounded-4" src="${img}" alt="加速器" referrerpolicy="no-referrer" />
             </a>
@@ -85,7 +85,7 @@ function print_vpn_image() {
  `);
 
     const $pub_phone = $(`
-    <div class="pop-banner d-block d-md-none border-bottom border-light-subtle py-2">
+    <div class="pop-banner d-block d-md-none border-bottom border-light-subtle rounded-4">
         <a title="加速器" href="${link}"  rel="nofollow" target="_blank">
             <img class="img-fluid rounded-4" src="${img_phone}" alt="加速器" referrerpolicy="no-referrer" />
         </a>
@@ -121,7 +121,7 @@ function create_alert_element() {
  */
 function show_info_alert() {
 
-    const $top_bar_element = $('main > .MuiStack-root .MuiStack-root');
+    const $top_bar_element = $('main > .MuiStack-root > .MuiStack-root');
     //如果没有找到元素，则不显示广告
     if ($top_bar_element.length === 0) {
 
