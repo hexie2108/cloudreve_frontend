@@ -28,7 +28,8 @@ function print_vpn_on_share_file() {
 
     console.log('判断是否显示广告');
 
-    const $box_content_element = $('.MuiContainer-root .MuiAvatar-root').parent();
+    
+    const $box_content_element = $('.MuiContainer-root .MuiAvatar-root').first().parent();
     //如果没有找到元素，则不显示广告
     if ($box_content_element.length === 0) {
         console.log('没有找到广告定位元素');
@@ -97,7 +98,8 @@ function print_vpn_on_share_folder() {
 
     console.log('判断是否显示广告');
 
-    const $explorer_container = $('.shared-folder #explorer-container');
+    
+    const $explorer_container = $('.fade-enter-done .MuiGrid-container').first().parent().parent();
     //如果没有找到元素，则不显示广告
     if ($explorer_container.length === 0) {
         console.log('没有找到广告定位元素');
