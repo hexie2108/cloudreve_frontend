@@ -67,7 +67,7 @@ function print_vpn_image() {
             break;
         //显示千速喵广告
         case 1:
-            link = 'https://tsmeow.xyz/#/register?code=MGIBvSHq';
+            link = 'https://qoxom.cc/#/register?code=MGIBvSHq';
             img = 'https://article.biliimg.com/bfs/new_dyn/ed2e5756b24d165d452ccceb4f4f39c9277257.jpg@.webp';
             img_phone = 'https://article.biliimg.com/bfs/new_dyn/9d96e813e94c9ba0cec07ca31802ca4d277257.jpg@.webp';
             break;
