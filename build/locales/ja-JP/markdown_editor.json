@@ -10,13 +10,16 @@
     "cancel": "キャンセル"
   },
   "uploadImage": {
+    "dialogTitle": "画像アップロード",
     "uploadInstructions": "デバイスから画像をアップロード：",
-    "addViaUrlInstructions": "またはURLから画像を追加：",
-    "autoCompletePlaceholder": "画像を選択または貼り付け",
+    "addViaUrlInstructions": "または画像URL / 相対パス（現在のファイルに対して）：",
+    "autoCompletePlaceholder": "画像URLを選択または貼り付け",
+    "addViaUrlInstructionsNoUpload": "画像URL：",
     "alt": "代替テキスト：",
     "title": "タイトル："
   },
   "imageEditor": {
+    "deleteImage": "画像削除",
     "editImage": "画像編集"
   },
   "createLink": {
@@ -28,7 +31,7 @@
   },
   "linkPreview": {
     "open": "{{url}}を新しいウィンドウで開く",
-    "edit": "リンクURLを編集",
+    "edit": "リンク編集",
     "copyToClipboard": "クリップボードにコピー",
     "copied": "コピーしました！",
     "remove": "リンク削除"
@@ -84,7 +87,13 @@
     "checkList": "タスクリスト",
     "deleteSandpack": "Sandpack削除",
     "undo": "元に戻す {{shortcut}}",
-    "redo": "やり直し {{shortcut}}"
+    "redo": "やり直し {{shortcut}}",
+    "superscript": "上付き",
+    "subscript": "下付き",
+    "strikethrough": "取り消し線",
+    "removeSubscript": "下付きの解除",
+    "removeSuperscript": "上付きの解除",
+    "removeStrikethrough": "取り消し線の解除"
   },
   "admonitions": {
     "note": "注意",

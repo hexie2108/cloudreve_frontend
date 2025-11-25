@@ -12,8 +12,9 @@
   "uploadImage": {
     "dialogTitle": "上傳圖片",
     "uploadInstructions": "從您的裝置上傳圖片：",
-    "addViaUrlInstructions": "或從網址新增圖片：",
-    "autoCompletePlaceholder": "選擇或貼上圖片網址",
+    "addViaUrlInstructions": "或填寫圖片 URL / 相對路徑（相對於當前文件）：",
+    "autoCompletePlaceholder": "選擇或貼上圖片 URL",
+    "addViaUrlInstructionsNoUpload": "圖片 URL：",
     "alt": "替代文字：",
     "title": "標題："
   },
@@ -86,7 +87,13 @@
     "checkList": "核取清單",
     "deleteSandpack": "刪除 Sandpack",
     "undo": "復原 {{shortcut}}",
-    "redo": "重做 {{shortcut}}"
+    "redo": "重做 {{shortcut}}",
+    "superscript": "上標",
+    "subscript": "下標",
+    "strikethrough": "刪除線",
+    "removeSubscript": "移除下標",
+    "removeSuperscript": "移除上標",
+    "removeStrikethrough": "移除刪除線"
   },
   "admonitions": {
     "note": "注意",

@@ -10,13 +10,16 @@
     "cancel": "Cancel"
   },
   "uploadImage": {
+    "dialogTitle": "Upload image",
     "uploadInstructions": "Upload an image from your device:",
-    "addViaUrlInstructions": "Or add an image from an URL:",
-    "autoCompletePlaceholder": "Select or paste an image src",
+    "addViaUrlInstructions": "Or add an image from an URL / relative path (relative to the current file):",
+    "autoCompletePlaceholder": "Select or paste an image URL",
+    "addViaUrlInstructionsNoUpload": "Image URL:",
     "alt": "Alt:",
     "title": "Title:"
   },
   "imageEditor": {
+    "deleteImage": "Delete image",
     "editImage": "Edit image"
   },
   "createLink": {
@@ -28,7 +31,7 @@
   },
   "linkPreview": {
     "open": "Open {{url}} in new window",
-    "edit": "Edit link URL",
+    "edit": "Edit link",
     "copyToClipboard": "Copy to clipboard",
     "copied": "Copied!",
     "remove": "Remove link"
@@ -58,7 +61,7 @@
       "selectBlockTypeTooltip": "Select block type",
       "placeholder": "Block type"
     },
-    "toggleGroup":"toggle group",
+    "toggleGroup": "toggle group",
     "removeBold": "Remove bold",
     "bold": "Bold",
     "removeItalic": "Remove italic",
@@ -84,7 +87,13 @@
     "checkList": "Check list",
     "deleteSandpack": "Delete this code block",
     "undo": "Undo {{shortcut}}",
-    "redo": "Redo {{shortcut}}"
+    "redo": "Redo {{shortcut}}",
+    "superscript": "Superscript",
+    "subscript": "Subscript",
+    "strikethrough": "Strikethrough",
+    "removeSubscript": "Remove subscript",
+    "removeSuperscript": "Remove superscript",
+    "removeStrikethrough": "Remove strikethrough"
   },
   "admonitions": {
     "note": "Note",
@@ -99,7 +108,7 @@
     "language": "Code block language",
     "selectLanguage": "Select code block language"
   },
-  "contentArea":{
-    "editableMarkdown": "editable markdown"
+  "contentArea": {
+    "editableMarkdown": "Editable markdown"
   }
 }

@@ -10,13 +10,16 @@
     "cancel": "取消"
   },
   "uploadImage": {
+    "dialogTitle": "上传图片",
     "uploadInstructions": "从您的设备中上传图片：",
-    "addViaUrlInstructions": "或从网址新增图片：",
-    "autoCompletePlaceholder": "选择或粘贴图片",
+    "addViaUrlInstructions": "或填写图片 URL / 相对路径 (相对于当前文件)：",
+    "autoCompletePlaceholder": "选择或粘贴图片 URL",
+    "addViaUrlInstructionsNoUpload": "图片 URL：",
     "alt": "替代文本：",
     "title": "标题："
   },
   "imageEditor": {
+    "deleteImage": "删除图片",
     "editImage": "编辑图片"
   },
   "createLink": {
@@ -28,7 +31,7 @@
   },
   "linkPreview": {
     "open": "在新窗口中打开 {{url}}",
-    "edit": "编辑链接网址",
+    "edit": "编辑链接",
     "copyToClipboard": "复制到剪贴板",
     "copied": "已复制！",
     "remove": "移除链接"
@@ -84,7 +87,13 @@
     "checkList": "任务列表",
     "deleteSandpack": "删除 Sandpack",
     "undo": "撤销 {{shortcut}}",
-    "redo": "重做 {{shortcut}}"
+    "redo": "重做 {{shortcut}}",
+    "superscript": "上标",
+    "subscript": "下标",
+    "strikethrough": "删除线",
+    "removeSubscript": "移除下标",
+    "removeSuperscript": "移除上标",
+    "removeStrikethrough": "移除删除线"
   },
   "admonitions": {
     "note": "注意",
@@ -99,7 +108,7 @@
     "language": "代码块语言",
     "selectLanguage": "选择代码块语言"
   },
-  "contentArea":{
+  "contentArea": {
     "editableMarkdown": "可编辑的 Markdown"
   }
 }
