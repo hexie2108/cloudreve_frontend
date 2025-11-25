@@ -1,18 +1,12 @@
-import { RadiusFrame } from "../../Frame/RadiusFrame.tsx";
-import {
-  Box,
-  Pagination,
-  Slide,
-  styled,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Box, Pagination, Slide, styled, useMediaQuery, useTheme } from "@mui/material";
 import { forwardRef, useContext } from "react";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
-import { MinPageSize } from "../TopBar/ViewOptionPopover.tsx";
 import { changePage } from "../../../redux/thunks/filemanager.ts";
+import { RadiusFrame } from "../../Frame/RadiusFrame.tsx";
+import { MinPageSize } from "../TopBar/ViewOptionPopover.tsx";
 import PaginationItem from "./PaginationItem.tsx";
 
+import { PaginationResults } from "../../../api/explorer.ts";
 import { FmIndexContext } from "../FmIndexContext.tsx";
 
 const PaginationFrame = styled(RadiusFrame)(({ theme }) => ({
@@ -29,25 +23,24 @@ export interface PaginationState {
 }
 
 export const usePaginationState = (fmIndex: number) => {
-  const pagination = useAppSelector(
-    (state) => state.fileManager[fmIndex].list?.pagination,
-  );
+  const pagination = useAppSelector((state) => state.fileManager[fmIndex].list?.pagination);
+  return getPaginationState(pagination);
+};
+
+export const getPaginationState = (pagination?: PaginationResults) => {
   const totalItems = pagination?.total_items;
   const page = pagination?.page;
   const pageSize = pagination?.page_size;
 
   const currentPage = (page ?? 0) + 1;
-  const totalPages = Math.ceil(
-    (totalItems ?? 1) / (pageSize && pageSize > 0 ? pageSize : MinPageSize),
-  );
+  const totalPages = Math.ceil((totalItems ?? 1) / (pageSize && pageSize > 0 ? pageSize : MinPageSize));
   const usePagination = totalPages > 1;
   return {
     currentPage,
     totalPages,
     usePagination,
     useEndlessLoading: !usePagination,
-    moreItems:
-      pagination?.next_token || (usePagination && currentPage < totalPages),
+    moreItems: pagination?.next_token || (usePagination && currentPage < totalPages),
     nextToken: pagination?.next_token,
   } as PaginationState;
 };
@@ -64,10 +57,7 @@ const PaginationFooter = forwardRef((_props, ref) => {
 
   return (
     <Slide direction={"up"} unmountOnExit in={paginationState.usePagination}>
-      <Box
-        ref={ref}
-        sx={{ display: "flex", px: isMobile ? 1 : 0, pb: isMobile ? 1 : 0 }}
-      >
+      <Box ref={ref} sx={{ display: "flex", px: isMobile ? 1 : 0, pb: isMobile ? 1 : 0 }}>
         <PaginationFrame withBorder>
           <Pagination
             renderItem={(item) => <PaginationItem {...item} />}

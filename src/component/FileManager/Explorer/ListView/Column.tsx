@@ -1,10 +1,11 @@
-import { useTranslation } from "react-i18next";
 import { Box, Fade, IconButton, styled } from "@mui/material";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { CustomProps } from "../../../../api/explorer.ts";
+import { NoWrapTypography } from "../../../Common/StyledComponents.tsx";
+import ArrowSortDownFilled from "../../../Icons/ArrowSortDownFilled.tsx";
 import Divider from "../../../Icons/Divider.tsx";
 import { ResizeProps } from "./ListHeader.tsx";
-import ArrowSortDownFilled from "../../../Icons/ArrowSortDownFilled.tsx";
-import { useCallback, useState } from "react";
-import { NoWrapTypography } from "../../../Common/StyledComponents.tsx";
 
 export interface ListViewColumn {
   type: ColumType;
@@ -21,6 +22,7 @@ export interface ListViewColumnSetting {
 
 export interface ColumTypeProps {
   metadata_key?: string;
+  custom_props_id?: string;
 }
 
 export enum ColumType {
@@ -52,6 +54,15 @@ export enum ColumType {
   artist = 23,
   album = 24,
   duration = 25,
+  street = 27,
+  locality = 28,
+  place = 29,
+  district = 30,
+  region = 31,
+  country = 32,
+
+  // Custom props
+  custom_props = 26,
 }
 
 export interface ColumTypeDefaults {
@@ -174,9 +185,37 @@ export const ColumnTypeDefaults: { [key: number]: ColumTypeDefaults } = {
     title: "application:fileManager.duration",
     width: 100,
   },
+  [ColumType.street]: {
+    title: "application:fileManager.street",
+    width: 100,
+  },
+  [ColumType.locality]: {
+    title: "application:fileManager.locality",
+    width: 100,
+  },
+  [ColumType.place]: {
+    title: "application:fileManager.place",
+    width: 100,
+  },
+  [ColumType.district]: {
+    title: "application:fileManager.district",
+    width: 100,
+  },
+  [ColumType.region]: {
+    title: "application:fileManager.region",
+    width: 100,
+  },
+  [ColumType.country]: {
+    title: "application:fileManager.country",
+    width: 100,
+  },
 };
 
-export const getColumnTypeDefaults = (c: ListViewColumnSetting, isMobile?: boolean): ColumTypeDefaults => {
+export const getColumnTypeDefaults = (
+  c: ListViewColumnSetting,
+  isMobile?: boolean,
+  customProps?: CustomProps[],
+): ColumTypeDefaults => {
   if (ColumnTypeDefaults[c.type]) {
     return {
       ...ColumnTypeDefaults[c.type],
@@ -184,6 +223,14 @@ export const getColumnTypeDefaults = (c: ListViewColumnSetting, isMobile?: boole
         isMobile && ColumnTypeDefaults[c.type].widthMobile
           ? ColumnTypeDefaults[c.type].widthMobile
           : ColumnTypeDefaults[c.type].width,
+    };
+  }
+
+  if (c.type === ColumType.custom_props) {
+    const customProp = customProps?.find((p) => p.id === c.props?.custom_props_id);
+    return {
+      title: customProp?.name ?? "application:fileManager.customProps",
+      width: 100,
     };
   }
 

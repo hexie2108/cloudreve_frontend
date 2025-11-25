@@ -33,6 +33,7 @@ const shareToSetting = (share: ShareModel, t: TFunction): ShareSetting => {
     password: share.password,
     use_custom_password: true,
     share_view: share.share_view,
+    show_readme: share.show_readme,
     downloads: share.remain_downloads != undefined && share.remain_downloads > 0,
 
     expires_val: expireOptions[2],
@@ -95,6 +96,7 @@ const ShareDialog = () => {
         setSetting(initialSetting);
       }
       setShareLink("");
+      setIncludePassword(true);
     }
   }, [open]);
 
@@ -160,7 +162,7 @@ const ShareDialog = () => {
           fullWidth: true,
           maxWidth: "xs",
         }}
-        cancelText={shareLink ? "common:close" : undefined}
+        cancelText={shareLink ? t("common:close") : undefined}
         secondaryAction={
           shareLink
             ? // @ts-ignore

@@ -1,5 +1,5 @@
 import { Box, Fade, PopoverProps, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { sizeToString } from "../../../../util";
 import CrUri, { SearchParam } from "../../../../util/uri.ts";
 import FileSmallIcon from "../FileSmallIcon.tsx";
@@ -15,19 +15,23 @@ import { useTranslation } from "react-i18next";
 import { TransitionGroup } from "react-transition-group";
 import { FileType, Metadata } from "../../../../api/explorer.ts";
 import { bindDelayedHover } from "../../../../hooks/delayedHover.tsx";
-import { useAppDispatch } from "../../../../redux/hooks.ts";
+import { useAppDispatch, useAppSelector } from "../../../../redux/hooks.ts";
 import { loadFileThumb } from "../../../../redux/thunks/file.ts";
 import AutoHeight from "../../../Common/AutoHeight.tsx";
 import { NoWrapBox } from "../../../Common/StyledComponents.tsx";
 import TimeBadge from "../../../Common/TimeBadge.tsx";
 import Info from "../../../Icons/Info.tsx";
 import FileBadge from "../../FileBadge.tsx";
+import { CustomPropsItem, customPropsMetadataPrefix } from "../../Sidebar/CustomProps/CustomProps.tsx";
+import { getPropsContent } from "../../Sidebar/CustomProps/CustomPropsItem.tsx";
 import {
   getAlbum,
   getAperture,
   getArtist,
   getCameraMake,
   getCameraModel,
+  getCountry,
+  getDistrict,
   getDuration,
   getExposure,
   getExposureBias,
@@ -37,8 +41,12 @@ import {
   getIso,
   getLensMake,
   getLensModel,
+  getLocality,
   getMediaTitle,
+  getPlace,
+  getRegion,
   getSoftware,
+  getStreet,
   takenAt,
 } from "../../Sidebar/MediaInfo.tsx";
 import { MediaMetaElements } from "../../Sidebar/MediaMetaCard.tsx";
@@ -270,7 +278,27 @@ const MediaElementsCell = memo(({ element }: { element?: MediaMetaElements | str
 
 const Cell = memo((props: CellProps) => {
   const { t } = useTranslation();
-  const { file, column, uploading, showLock, fileTag, search, isSelected } = props;
+  const customProps = useAppSelector((state) => state.siteConfig.explorer?.config?.custom_props);
+  const customProp = useMemo(() => {
+    if (!props.column.props?.custom_props_id || props.column.type !== ColumType.custom_props) {
+      return undefined;
+    }
+    const customProp = customProps?.find((p) => p.id === props.column.props?.custom_props_id);
+    if (!customProp) {
+      return undefined;
+    }
+    const value = props.file.metadata?.[`${customPropsMetadataPrefix}${customProp.id}`];
+    if (value === undefined) {
+      return undefined;
+    }
+    return {
+      id: customProp.id,
+      props: customProp,
+      value: value ?? "",
+    } as CustomPropsItem;
+  }, [customProps, props.column.props?.custom_props_id, props.column.type, props.file.metadata]);
+
+  const { file, column, uploading, fileTag, search, isSelected } = props;
   switch (column.type) {
     case ColumType.name:
       return <FileNameCell {...props} />;
@@ -330,6 +358,23 @@ const Cell = memo((props: CellProps) => {
       return <MediaElementsCell element={getAlbum(file)} />;
     case ColumType.duration:
       return <MediaElementsCell element={getDuration(file)} />;
+    case ColumType.street:
+      return <MediaElementsCell element={getStreet(file)} />;
+    case ColumType.locality:
+      return <MediaElementsCell element={getLocality(file)} />;
+    case ColumType.place:
+      return <MediaElementsCell element={getPlace(file)} />;
+    case ColumType.district:
+      return <MediaElementsCell element={getDistrict(file)} />;
+    case ColumType.region:
+      return <MediaElementsCell element={getRegion(file)} />;
+    case ColumType.country:
+      return <MediaElementsCell element={getCountry(file)} />;
+    case ColumType.custom_props:
+      if (customProp) {
+        return getPropsContent(customProp, () => {}, false, true);
+      }
+      return <Box />;
   }
 });
 

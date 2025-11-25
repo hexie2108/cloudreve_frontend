@@ -18,17 +18,22 @@ export const commonMagicVars: MagicVar[] = [
   { name: "{hour}", value: "policy.magicVar.hour", example: "12" },
   { name: "{minute}", value: "policy.magicVar.minute", example: "00" },
   { name: "{second}", value: "policy.magicVar.second", example: "00" },
+  { name: "{uuid}", value: "policy.magicVar.uuidV4", example: "550e8400-e29b-41d4-a716-446655440000" },
+  { name: "{ext}", value: "policy.magicVar.extension", example: ".jpg" },
+  { name: "{originname}", value: "policy.magicVar.originalFileName", example: "example.jpg" },
+  { name: "{originname_without_ext}", value: "policy.magicVar.originFileNameNoext", example: "example" },
 ];
 
 export const pathMagicVars: MagicVar[] = [
   ...commonMagicVars,
-  { name: "{path}", value: "policy.magicVar.path", example: "/path/to/" }
+  { name: "{path}", value: "policy.magicVar.path", example: "/path/to/" },
 ];
 
-export const fileMagicVars: MagicVar[] = [
-  ...commonMagicVars,
-  { name: "{originname}", value: "policy.magicVar.originalFileName", example: "example.jpg" },
-  { name: "{ext}", value: "policy.magicVar.extension", example: ".jpg" },
-  { name: "{originname_without_ext}", value: "policy.magicVar.originFileNameNoext", example: "example" },
-  { name: "{uuid}", value: "policy.magicVar.uuidV4", example: "550e8400-e29b-41d4-a716-446655440000" },
-]; 
+export const fileMagicVars: MagicVar[] = [...commonMagicVars];
+
+export const thumbnailMagicVars: MagicVar[] = [
+  ...pathMagicVars,
+  { name: "{blob_name}", value: "policy.magicVar.blobName", example: "a1b2c3d4_example.mp4" },
+  { name: "{blob_name_without_ext}", value: "policy.magicVar.blobNameNoext", example: "abcd1234_example" },
+  { name: "{blob_path}", value: "policy.magicVar.blobPath", example: "/data/i-m-physical-path/" },
+];

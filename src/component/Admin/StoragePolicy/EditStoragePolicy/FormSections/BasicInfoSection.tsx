@@ -21,7 +21,7 @@ import { DefaultCloseAction } from "../../../../Common/Snackbar/snackbar";
 import { DenseFilledTextField, DenseSelect, SecondaryButton } from "../../../../Common/StyledComponents";
 import { SquareMenuItem } from "../../../../FileManager/ContextMenu/ContextMenu";
 import SettingForm from "../../../../Pages/Setting/SettingForm";
-import { Code } from "../../../Common/Code";
+import { Code } from "../../../../Common/Code.tsx";
 import { EndpointInput } from "../../../Common/EndpointInput";
 import NodeSelectionInput from "../../../Common/NodeSelectionInput";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../../../Settings/Settings";
@@ -80,6 +80,7 @@ const BasicInfoSection = () => {
       values.type === PolicyType.obs ||
       values.type === PolicyType.qiniu ||
       values.type === PolicyType.s3 ||
+      values.type === PolicyType.ks3 ||
       values.type === PolicyType.upyun
     );
   }, [values.type]);
@@ -93,7 +94,8 @@ const BasicInfoSection = () => {
       values.type === PolicyType.oss ||
       values.type === PolicyType.cos ||
       values.type === PolicyType.obs ||
-      values.type === PolicyType.s3
+      values.type === PolicyType.s3 ||
+      values.type === PolicyType.ks3
     );
   }, [values.type]);
 
@@ -345,7 +347,7 @@ const BasicInfoSection = () => {
                     <NoMarginHelperText>{t("policy.thisIsACustomDomainDes")}</NoMarginHelperText>
                   </>
                 )}
-                {values.type === PolicyType.s3 && (
+                {(values.type === PolicyType.s3 || values.type === PolicyType.ks3) && (
                   <>
                     <FormControlLabel
                       sx={{ mt: 1, mb: -1 }}
@@ -364,7 +366,13 @@ const BasicInfoSection = () => {
                       label={t("policy.usePathEndpoint")}
                     />
                     <NoMarginHelperText>
-                      <Trans i18nKey="policy.s3EndpointPathStyle" ns="dashboard" components={[<Code />]} />
+                      <Trans
+                        i18nKey={
+                          values.type === PolicyType.s3 ? "policy.s3EndpointPathStyle" : "policy.ks3EndpointPathStyle"
+                        }
+                        ns="dashboard"
+                        components={[<Code />]}
+                      />
                     </NoMarginHelperText>
                   </>
                 )}
@@ -405,12 +413,10 @@ const BasicInfoSection = () => {
                 </SettingForm>
               </>
             )}
-            {values.type == PolicyType.s3 && (
-              <SettingForm title={t("policy.s3Region")} lgWidth={5}>
+            {policyProps.regionCode && (
+              <SettingForm title={t(policyProps.regionCode ?? "")} lgWidth={5}>
                 <DenseFilledTextField fullWidth required value={values.settings?.region} onChange={onS3RegionChange} />
-                <NoMarginHelperText>
-                  <Trans i18nKey="policy.selectRegionDes" ns="dashboard" components={[<Code />]} />
-                </NoMarginHelperText>
+                <NoMarginHelperText>{policyProps.regionCodeDes}</NoMarginHelperText>
               </SettingForm>
             )}
             <SettingForm title={t("policy.accessCredential")} lgWidth={5}>
@@ -464,7 +470,7 @@ const BasicInfoSection = () => {
             </SecondaryButton>
           </SettingForm>
         )}
-        {values.type === PolicyType.s3 && (
+        {(values.type === PolicyType.s3 || values.type === PolicyType.ks3) && (
           <SettingForm title={t("policy.batchDeleteSize")} lgWidth={5}>
             <DenseFilledTextField
               fullWidth

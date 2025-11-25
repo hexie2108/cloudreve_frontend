@@ -1,5 +1,5 @@
-import { useTranslation } from "react-i18next";
 import {
+  Alert,
   Box,
   DialogContent,
   IconButton,
@@ -14,25 +14,27 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
+import { useTranslation } from "react-i18next";
+import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
+import { confirmOperation } from "../../../redux/thunks/dialog.ts";
+import { downloadSingleFile } from "../../../redux/thunks/download.ts";
+import { setFileVersion } from "../../../redux/thunks/file.ts";
+import { openViewers } from "../../../redux/thunks/viewer.ts";
+import { sizeToString } from "../../../util";
+import AutoHeight from "../../Common/AutoHeight.tsx";
 import { closeVersionControlDialog } from "../../../redux/globalStateSlice.ts";
 import { Entity, EntityType, FileResponse } from "../../../api/explorer.ts";
 import { deleteVersion, getFileInfo } from "../../../api/api.ts";
 import { NoWrapTableCell, StyledTableContainerPaper } from "../../Common/StyledComponents.tsx";
 import TimeBadge from "../../Common/TimeBadge.tsx";
-import { sizeToString } from "../../../util";
+import { AnonymousUser } from "../../Common/User/UserAvatar.tsx";
 import UserBadge from "../../Common/User/UserBadge.tsx";
+import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
 import MoreVertical from "../../Icons/MoreVertical.tsx";
 import { SquareMenuItem } from "../ContextMenu/ContextMenu.tsx";
-import { downloadSingleFile } from "../../../redux/thunks/download.ts";
-import AutoHeight from "../../Common/AutoHeight.tsx";
-import { confirmOperation } from "../../../redux/thunks/dialog.ts";
-import { openViewers } from "../../../redux/thunks/viewer.ts";
 import { FileManagerIndex } from "../FileManager.tsx";
-import { setFileVersion } from "../../../redux/thunks/file.ts";
-import { AnonymousUser } from "../../Common/User/UserAvatar.tsx";
+import { EncryptionStatusText } from "../Sidebar/BasicInfo.tsx";
 
 const VersionControl = () => {
   const { t } = useTranslation();
@@ -46,6 +48,7 @@ const VersionControl = () => {
   const open = useAppSelector((state) => state.globalState.versionControlDialogOpen);
   const target = useAppSelector((state) => state.globalState.versionControlDialogFile);
   const highlight = useAppSelector((state) => state.globalState.versionControlHighlight);
+  const showEncryptionStatus = useAppSelector((state) => state.siteConfig?.explorer?.config?.show_encryption_status);
 
   const onClose = useCallback(() => {
     if (!loading) {
@@ -55,23 +58,23 @@ const VersionControl = () => {
 
   useEffect(() => {
     if (target && open) {
-      if (target.extended_info) {
-        setFileExtended(target);
-      } else {
-        setFileExtended(undefined);
-        dispatch(
-          getFileInfo({
-            uri: target.path,
-            extended: true,
-          }),
-        ).then((res) => setFileExtended(res));
-      }
+      setFileExtended(undefined);
+      dispatch(
+        getFileInfo({
+          uri: target.path,
+          extended: true,
+        }),
+      ).then((res) => setFileExtended(res));
     }
   }, [target, open]);
 
   const versionEntities = useMemo(() => {
     return fileExtended?.extended_info?.entities?.filter((e) => e.type == EntityType.version);
   }, [fileExtended?.extended_info?.entities]);
+
+  const hilightButNotFound = useMemo(() => {
+    return highlight && fileExtended?.extended_info && !versionEntities?.some((e) => e.id == highlight);
+  }, [highlight, fileExtended?.extended_info?.entities]);
 
   const handleActionClose = () => {
     setAnchorEl(null);
@@ -201,6 +204,11 @@ const VersionControl = () => {
       >
         <DialogContent>
           <AutoHeight>
+            {hilightButNotFound && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {t("application:fileManager.versionNotFound")}
+              </Alert>
+            )}
             <TableContainer component={StyledTableContainerPaper}>
               <Table sx={{ width: "100%" }} size="small">
                 <TableHead>
@@ -210,6 +218,9 @@ const VersionControl = () => {
                     <NoWrapTableCell>{t("fileManager.size")}</NoWrapTableCell>
                     <NoWrapTableCell>{t("fileManager.createdBy")}</NoWrapTableCell>
                     <NoWrapTableCell>{t("application:fileManager.storagePolicy")}</NoWrapTableCell>
+                    {showEncryptionStatus && (
+                      <NoWrapTableCell>{t("application:fileManager.encryption")}</NoWrapTableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -258,6 +269,17 @@ const VersionControl = () => {
                           />
                         </TableCell>
                         <NoWrapTableCell>{e.storage_policy?.name}</NoWrapTableCell>
+                        {showEncryptionStatus && (
+                          <NoWrapTableCell>
+                            <EncryptionStatusText
+                              flexWrap={false}
+                              status={{
+                                status: e.encrypted_with ? "full" : "none",
+                                cipher: e.encrypted_with ? [e.encrypted_with] : [],
+                              }}
+                            />
+                          </NoWrapTableCell>
+                        )}
                       </TableRow>
                     ))}
                 </TableBody>

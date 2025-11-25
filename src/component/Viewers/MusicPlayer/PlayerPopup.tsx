@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { FileResponse, Metadata } from "../../../api/explorer.ts";
+import { useMediaSession } from "../../../hooks/useMediaSession";
 import { useAppDispatch } from "../../../redux/hooks.ts";
 import { loadFileThumb } from "../../../redux/thunks/file.ts";
 import SessionManager, { UserSettings } from "../../../session";
@@ -28,10 +29,12 @@ import { MediaMetaElements } from "../../FileManager/Sidebar/MediaMetaCard.tsx";
 import AppsList from "../../Icons/AppsList.tsx";
 import ArrowRepeatAll from "../../Icons/ArrowRepeatAll.tsx";
 import ArrowRepeatOne from "../../Icons/ArrowRepeatOne.tsx";
+import ArrowRepeatOff from "../../Icons/ArrowRepeatOff.tsx";
 import ArrowShuffle from "../../Icons/ArrowShuffle.tsx";
 import MusicNote1 from "../../Icons/MusicNote1.tsx";
 import { LoopMode } from "./MusicPlayer.tsx";
 import Playlist from "./Playlist.tsx";
+import RepeatModePopover from "./RepeatModePopover.tsx";
 
 const WallPaper = styled("div")({
   position: "absolute",
@@ -80,7 +83,6 @@ const CoverImage = styled("div")({
   objectFit: "cover",
   overflow: "hidden",
   flexShrink: 0,
-  borderRadius: 8,
   backgroundColor: "rgba(0,0,0,0.08)",
   "& > img": {
     width: "100%",
@@ -172,8 +174,12 @@ export interface PlayerPopupProps extends PopoverProps {
   setVolumeLevel: (volume: number) => void;
   volume: number;
   loopProceed: (isNext: boolean) => void;
+  manualNavigate: (isNext: boolean) => void;
   loopMode: number;
   toggleLoopMode: () => void;
+  setLoopMode: (mode: number) => void;
+  playbackSpeed: number;
+  setPlaybackSpeed: (speed: number) => void;
   playIndex: (index: number, volume?: number) => void;
 }
 
@@ -190,7 +196,11 @@ export const PlayerPopup = ({
   setVolumeLevel,
   loopMode,
   loopProceed,
+  manualNavigate,
   toggleLoopMode,
+  setLoopMode,
+  playbackSpeed,
+  setPlaybackSpeed,
   playlist,
   playIndex,
   ...rest
@@ -203,6 +213,7 @@ export const PlayerPopup = ({
   const [progress, setProgress] = useState(0);
   const seeking = useRef(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [repeatAnchorEl, setRepeatAnchorEl] = useState<null | HTMLElement>(null);
 
   function formatDuration(value: number) {
     const minute = Math.floor(value / 60);
@@ -214,11 +225,6 @@ export const PlayerPopup = ({
 
   useEffect(() => {
     setThumbBgLoaded(false);
-    if (file && "mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: file.metadata?.[Metadata.music_title] ?? file.name,
-      });
-    }
     if (file && (!file.metadata || file.metadata[Metadata.thumbDisabled] === undefined)) {
       dispatch(loadFileThumb(FileManagerIndex.main, file)).then((src) => {
         setThumbSrc(src);
@@ -226,7 +232,7 @@ export const PlayerPopup = ({
     } else {
       setThumbSrc(null);
     }
-  }, [file]);
+  }, [file, dispatch]);
 
   useEffect(() => {
     if (seeking.current) {
@@ -239,6 +245,20 @@ export const PlayerPopup = ({
     seeking.current = false;
     onSeek(time);
   };
+
+  // Initialize Media Session API
+  useMediaSession({
+    file,
+    playing,
+    duration,
+    current,
+    thumbSrc,
+    onPlay: togglePause,
+    onPause: togglePause,
+    onPrevious: () => manualNavigate(false),
+    onNext: () => manualNavigate(true),
+    onSeek,
+  });
 
   return (
     <Popover
@@ -262,6 +282,15 @@ export const PlayerPopup = ({
           playlist={playlist}
         />
       )}
+      <RepeatModePopover
+        open={Boolean(repeatAnchorEl)}
+        anchorEl={repeatAnchorEl}
+        onClose={() => setRepeatAnchorEl(null)}
+        loopMode={loopMode}
+        onLoopModeChange={setLoopMode}
+        playbackSpeed={playbackSpeed}
+        onPlaybackSpeedChange={setPlaybackSpeed}
+      />
       <Widget>
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <CoverImage>
@@ -366,10 +395,11 @@ export const PlayerPopup = ({
             mt: -1,
           }}
         >
-          <IconButton aria-label="loop mode" onClick={toggleLoopMode}>
+          <IconButton aria-label="loop mode" onClick={(e) => setRepeatAnchorEl(e.currentTarget)}>
             {loopMode == LoopMode.list_repeat && <ArrowRepeatAll fontSize={"medium"} htmlColor={mainIconColor} />}
             {loopMode == LoopMode.single_repeat && <ArrowRepeatOne fontSize={"medium"} htmlColor={mainIconColor} />}
             {loopMode == LoopMode.shuffle && <ArrowShuffle fontSize={"medium"} htmlColor={mainIconColor} />}
+            {loopMode == LoopMode.play_once && <ArrowRepeatOff fontSize={"medium"} htmlColor={mainIconColor} />}
           </IconButton>
           <Box
             sx={{
@@ -378,7 +408,7 @@ export const PlayerPopup = ({
               justifyContent: "center",
             }}
           >
-            <IconButton aria-label="previous song" onClick={() => loopProceed(false)}>
+            <IconButton aria-label="previous song" onClick={() => manualNavigate(false)}>
               <FastRewindRounded fontSize="large" htmlColor={mainIconColor} />
             </IconButton>
             <IconButton aria-label={!playing ? "play" : "pause"} onClick={togglePause}>
@@ -388,7 +418,7 @@ export const PlayerPopup = ({
                 <PauseRounded sx={{ fontSize: "3rem" }} htmlColor={mainIconColor} />
               )}
             </IconButton>
-            <IconButton aria-label="next song" onClick={() => loopProceed(true)}>
+            <IconButton aria-label="next song" onClick={() => manualNavigate(true)}>
               <FastForwardRounded fontSize="large" htmlColor={mainIconColor} />
             </IconButton>
           </Box>

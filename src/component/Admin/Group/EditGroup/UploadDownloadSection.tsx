@@ -8,6 +8,7 @@ import SizeInput from "../../../Common/SizeInput";
 import { DenseFilledTextField } from "../../../Common/StyledComponents";
 import SettingForm from "../../../Pages/Setting/SettingForm";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../../Settings/Settings";
+import { AnonymousGroupID } from "../GroupRow";
 import { GroupSettingContext } from "./GroupSettingWrapper";
 
 const UploadDownloadSection = () => {
@@ -68,6 +69,16 @@ const UploadDownloadSection = () => {
     [setGroup],
   );
 
+  const onReuseDirectLinkChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setGroup((p: GroupEnt) => ({
+        ...p,
+        permissions: new Boolset(p.permissions).set(GroupPermission.unique_direct_link, !e.target.checked).toString(),
+      }));
+    },
+    [setGroup],
+  );
+
   return (
     <SettingSection>
       <Typography variant="h6" gutterBottom>
@@ -88,50 +99,70 @@ const UploadDownloadSection = () => {
             <NoMarginHelperText>{t("group.serverSideBatchDownloadDes")}</NoMarginHelperText>
           </FormControl>
         </SettingForm>
-        <SettingForm lgWidth={5}>
-          <FormControl fullWidth>
-            <FormControlLabel
-              control={
-                <Switch checked={(values?.settings?.source_batch ?? 0) > 0} onChange={onAllowDirectLinkChange} />
-              }
-              label={t("group.getDirectLink")}
-            />
-            <NoMarginHelperText>{t("group.getDirectLinkDes")}</NoMarginHelperText>
-          </FormControl>
-        </SettingForm>
-        <Collapse in={(values?.settings?.source_batch ?? 0) > 0} unmountOnExit>
-          <Stack spacing={3}>
-            <SettingForm lgWidth={5} title={t("group.bathSourceLinkLimit")}>
-              <FormControl fullWidth>
-                <DenseFilledTextField
-                  slotProps={{
-                    htmlInput: {
-                      type: "number",
-                      min: 0,
-                    },
-                  }}
-                  value={values?.settings?.source_batch ?? 0}
-                  onChange={onSourceBatchChange}
-                />
-                <NoMarginHelperText>{t("group.bathSourceLinkLimitDes")}</NoMarginHelperText>
-              </FormControl>
-            </SettingForm>
+        {values?.id != AnonymousGroupID && (
+          <>
             <SettingForm lgWidth={5}>
               <FormControl fullWidth>
                 <FormControlLabel
                   control={
-                    <Switch
-                      checked={values?.settings?.redirected_source ?? false}
-                      onChange={onRedirectedSourceChange}
-                    />
+                    <Switch checked={(values?.settings?.source_batch ?? 0) > 0} onChange={onAllowDirectLinkChange} />
                   }
-                  label={t("group.redirectedSource")}
+                  label={t("group.getDirectLink")}
                 />
-                <NoMarginHelperText>{t("group.redirectedSourceDes")}</NoMarginHelperText>
+                <NoMarginHelperText>{t("group.getDirectLinkDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-          </Stack>
-        </Collapse>
+            <Collapse in={(values?.settings?.source_batch ?? 0) > 0} unmountOnExit>
+              <Stack spacing={3}>
+                <SettingForm lgWidth={5} title={t("group.bathSourceLinkLimit")}>
+                  <FormControl fullWidth>
+                    <DenseFilledTextField
+                      slotProps={{
+                        htmlInput: {
+                          type: "number",
+                          min: 0,
+                        },
+                      }}
+                      value={values?.settings?.source_batch ?? 0}
+                      onChange={onSourceBatchChange}
+                    />
+                    <NoMarginHelperText>{t("group.bathSourceLinkLimitDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+                <SettingForm lgWidth={5}>
+                  <FormControl fullWidth>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={values?.settings?.redirected_source ?? false}
+                          onChange={onRedirectedSourceChange}
+                        />
+                      }
+                      label={t("group.redirectedSource")}
+                    />
+                    <NoMarginHelperText>{t("group.redirectedSourceDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+              </Stack>
+              <Collapse in={values?.settings?.redirected_source} unmountOnExit>
+                <SettingForm lgWidth={5}>
+                  <FormControl fullWidth sx={{ mt: 3 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={!permission.enabled(GroupPermission.unique_direct_link)}
+                          onChange={onReuseDirectLinkChange}
+                        />
+                      }
+                      label={t("group.reuseDirectLink")}
+                    />
+                    <NoMarginHelperText>{t("group.reuseDirectLinkDes")}</NoMarginHelperText>
+                  </FormControl>
+                </SettingForm>
+              </Collapse>
+            </Collapse>
+          </>
+        )}
         <SettingForm lgWidth={5} title={t("group.downloadSpeedLimit")}>
           <FormControl fullWidth>
             <SizeInput

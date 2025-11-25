@@ -11,7 +11,7 @@ import Boolset from "../../../util/boolset.ts";
 import CrUri, { Filesystem } from "../../../util/uri.ts";
 import { FileManagerIndex } from "../FileManager.tsx";
 
-const supportedArchiveTypes = ["zip", "gz", "xz", "tar", "rar"];
+const supportedArchiveTypes = ["zip", "gz", "xz", "tar", "rar", "7z", "bz2"];
 
 export const canManageVersion = (file: FileResponse, bs: Boolset) => {
   return (
@@ -45,9 +45,11 @@ export interface DisplayOption {
   hasFile?: boolean;
   hasFolder?: boolean;
   hasOwned?: boolean;
+  hasFailedThumb?: boolean;
 
   showEnter?: boolean;
   showOpen?: boolean;
+  showOpenWithCascading?: () => boolean;
   showOpenWith?: () => boolean;
   showDownload?: boolean;
   showGoToSharedLink?: boolean;
@@ -69,11 +71,14 @@ export interface DisplayOption {
   showTags?: boolean;
   showChangeFolderColor?: boolean;
   showChangeIcon?: boolean;
+  showCustomProps?: boolean;
 
   showMore?: boolean;
   showVersionControl?: boolean;
+  showDirectLinkManagement?: boolean;
   showManageShares?: boolean;
   showCreateArchive?: boolean;
+  showResetThumb?: boolean;
 
   andCapability?: Boolset;
   orCapability?: Boolset;
@@ -151,8 +156,13 @@ export const getActionOpt = (
       display.hasUpdatable = true;
     }
 
-    if (target.metadata && target.metadata[Metadata.restore_uri]) {
-      display.hasTrashFile = true;
+    if (target.metadata) {
+      if (target.metadata[Metadata.restore_uri]) {
+        display.hasTrashFile = true;
+      }
+      if (target.metadata[Metadata.thumbDisabled] !== undefined) {
+        display.hasFailedThumb = true;
+      }
     }
 
     if (target.type == FileType.file) {
@@ -221,6 +231,7 @@ export const getActionOpt = (
     display.orCapability.enabled(NavigatorCapability.update_metadata);
   display.showChangeIcon =
     display.hasUpdatable && display.orCapability && display.orCapability.enabled(NavigatorCapability.update_metadata);
+  display.showCustomProps = display.showChangeIcon;
   display.showDownload =
     display.hasReadable && display.orCapability && display.orCapability.enabled(NavigatorCapability.download_file);
   display.showDirectLink =
@@ -228,7 +239,14 @@ export const getActionOpt = (
     display.orCapability &&
     (currentUserAnonymous?.group?.direct_link_batch_size ?? 0) >= targets.length &&
     display.orCapability.enabled(NavigatorCapability.download_file);
-  display.showOpen = targets.length == 1 && display.hasFile && display.showDownload && !!viewerSetting;
+  display.showDirectLinkManagement = display.showDirectLink && targets.length == 1 && display.hasFile;
+  display.showOpen =
+    targets.length == 1 &&
+    display.hasFile &&
+    display.showDownload &&
+    !!viewerSetting &&
+    !!firstFileSuffix &&
+    !!viewerSetting?.[firstFileSuffix];
   display.showEnter =
     targets.length == 1 &&
     display.hasFolder &&
@@ -249,11 +267,13 @@ export const getActionOpt = (
     groupBs.enabled(GroupPermission.remote_download) &&
     firstFileSuffix == "torrent";
 
-  display.showOpenWith = () => false;
+  display.showOpenWithCascading = () => false;
+  display.showOpenWith = () => targets.length == 1 && !!display.hasFile && !!display.showDownload;
   if (display.showOpen) {
-    display.showOpen = !!firstFileSuffix && !!viewerSetting?.[firstFileSuffix];
+    display.showOpenWithCascading = () =>
+      !!(display.showOpen && viewerSetting && viewerSetting[firstFileSuffix ?? ""]?.length >= 1);
     display.showOpenWith = () =>
-      !!(display.showOpen && viewerSetting && viewerSetting[firstFileSuffix ?? ""]?.length > 1);
+      !!(display.showOpen && viewerSetting && viewerSetting[firstFileSuffix ?? ""]?.length < 1);
   }
   display.showOrganize = display.showPin || display.showMove || display.showChangeFolderColor || display.showChangeIcon;
   display.showGoToSharedLink =
@@ -277,8 +297,20 @@ export const getActionOpt = (
     groupBs.enabled(GroupPermission.archive_task) &&
     display.orCapability &&
     display.orCapability.enabled(NavigatorCapability.download_file);
+  display.showResetThumb =
+    display.hasFile &&
+    !display.hasFolder &&
+    display.hasFailedThumb &&
+    display.allUpdatable &&
+    display.orCapability &&
+    display.orCapability.enabled(NavigatorCapability.update_metadata);
 
-  display.showMore = display.showVersionControl || display.showManageShares || display.showCreateArchive;
+  display.showMore =
+    display.showVersionControl ||
+    display.showManageShares ||
+    display.showCreateArchive ||
+    display.showDirectLinkManagement ||
+    display.showResetThumb;
   return display;
 };
 

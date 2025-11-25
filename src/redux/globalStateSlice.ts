@@ -178,6 +178,8 @@ export interface GlobalStateSlice {
   // Extract archive dialog
   extractArchiveDialogOpen?: boolean;
   extractArchiveDialogFile?: FileResponse;
+  extractArchiveDialogMask?: string[];
+  extractArchiveDialogEncoding?: string;
 
   // Remote download dialog
   remoteDownloadDialogOpen?: boolean;
@@ -189,6 +191,11 @@ export interface GlobalStateSlice {
   // Direct Link result dialog
   directLinkDialogOpen?: boolean;
   directLinkRes?: DirectLink[];
+
+  // Direct Link management dialog
+  directLinkManagementDialogOpen?: boolean;
+  directLinkManagementDialogFile?: FileResponse;
+  directLinkHighlight?: string;
 
   // DnD
   dndState: DndState;
@@ -215,6 +222,8 @@ export interface GlobalStateSlice {
   customViewer?: CustomViewerState;
   epubViewer?: GeneralViewerState;
   musicPlayer?: MusicPlayerState;
+  excalidrawViewer?: GeneralViewerState;
+  archiveViewer?: GeneralViewerState;
 
   // Viewer selector
   viewerSelector?: ViewerSelectorState;
@@ -226,6 +235,8 @@ export interface GlobalStateSlice {
   uploadTaskCount?: number;
   uploadTaskListOpen?: boolean;
   uploadFromClipboardDialogOpen?: boolean;
+  uploadRawFiles?: File[];
+  uploadRawPromiseId?: string[];
 
   policyOptionCache?: StoragePolicy[];
 
@@ -236,6 +247,11 @@ export interface GlobalStateSlice {
   advanceSearchOpen?: boolean;
   advanceSearchBasePath?: string;
   advanceSearchInitialNameCondition?: string[];
+
+  // Share README
+  shareReadmeDetect?: number;
+  shareReadmeOpen?: boolean;
+  shareReadmeTarget?: FileResponse;
 }
 
 let preferred_theme: string | undefined = undefined;
@@ -261,6 +277,39 @@ export const globalStateSlice = createSlice({
   name: "globalState",
   initialState,
   reducers: {
+    setUploadRawFiles: (
+      state,
+      action: PayloadAction<{
+        files: File[];
+        promiseId: string[];
+      }>,
+    ) => {
+      state.uploadRawFiles = action.payload.files ?? [];
+      state.uploadRawPromiseId = action.payload.promiseId ?? [];
+    },
+    setShareReadmeDetect: (state, action: PayloadAction<boolean>) => {
+      state.shareReadmeDetect = action.payload ? (state.shareReadmeDetect ?? 0) + 1 : 0;
+    },
+    setShareReadmeOpen: (state, action: PayloadAction<{ open: boolean; target?: FileResponse }>) => {
+      state.shareReadmeOpen = action.payload.open;
+      state.shareReadmeTarget = action.payload.target;
+    },
+    closeShareReadme: (state) => {
+      state.shareReadmeOpen = false;
+    },
+    setDirectLinkManagementDialog: (
+      state,
+      action: PayloadAction<{ open: boolean; file?: FileResponse; highlight?: string }>,
+    ) => {
+      state.directLinkManagementDialogOpen = action.payload.open;
+      state.directLinkManagementDialogFile = action.payload.file;
+      state.directLinkHighlight = action.payload.highlight;
+    },
+    closeDirectLinkManagementDialog: (state) => {
+      state.directLinkManagementDialogOpen = false;
+      state.directLinkManagementDialogFile = undefined;
+      state.directLinkHighlight = undefined;
+    },
     setMobileDrawerOpen: (state, action: PayloadAction<boolean>) => {
       state.mobileDrawerOpen = action.payload;
     },
@@ -328,13 +377,22 @@ export const globalStateSlice = createSlice({
       state.pdfViewer = undefined;
       state.customViewer = undefined;
       state.epubViewer = undefined;
+      state.excalidrawViewer = undefined;
+      state.archiveViewer = undefined;
     },
-    setExtractArchiveDialog: (state, action: PayloadAction<{ open: boolean; file?: FileResponse }>) => {
+    setExtractArchiveDialog: (
+      state,
+      action: PayloadAction<{ open: boolean; file?: FileResponse; mask?: string[]; encoding?: string }>,
+    ) => {
       state.extractArchiveDialogOpen = action.payload.open;
       state.extractArchiveDialogFile = action.payload.file;
+      state.extractArchiveDialogMask = action.payload.mask;
+      state.extractArchiveDialogEncoding = action.payload.encoding;
     },
     closeExtractArchiveDialog: (state) => {
       state.extractArchiveDialogOpen = false;
+      state.extractArchiveDialogMask = undefined;
+      state.extractArchiveDialogEncoding = undefined;
     },
     setCreateArchiveDialog: (
       state,
@@ -465,6 +523,18 @@ export const globalStateSlice = createSlice({
     },
     closeMarkdownViewer: (state) => {
       state.markdownViewer && (state.markdownViewer.open = false);
+    },
+    setExcalidrawViewer: (state, action: PayloadAction<GeneralViewerState>) => {
+      state.excalidrawViewer = action.payload;
+    },
+    closeExcalidrawViewer: (state) => {
+      state.excalidrawViewer && (state.excalidrawViewer.open = false);
+    },
+    setArchiveViewer: (state, action: PayloadAction<GeneralViewerState>) => {
+      state.archiveViewer = action.payload;
+    },
+    closeArchiveViewer: (state) => {
+      state.archiveViewer && (state.archiveViewer.open = false);
     },
     addShareInfo: (state, action: PayloadAction<{ info: Share; id: string }>) => {
       state.shareInfo[action.payload.id] = action.payload.info;
@@ -696,6 +766,9 @@ export const globalStateSlice = createSlice({
 
 export default globalStateSlice.reducer;
 export const {
+  setArchiveViewer,
+  closeArchiveViewer,
+  setUploadRawFiles,
   setMobileDrawerOpen,
   setDirectLinkDialog,
   closeDirectLinkDialog,
@@ -785,4 +858,11 @@ export const {
   resetDialogs,
   setPolicyOptionCache,
   setSearchPopup,
+  setExcalidrawViewer,
+  closeExcalidrawViewer,
+  setDirectLinkManagementDialog,
+  closeDirectLinkManagementDialog,
+  setShareReadmeDetect,
+  closeShareReadme,
+  setShareReadmeOpen,
 } = globalStateSlice.actions;

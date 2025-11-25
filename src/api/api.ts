@@ -1,9 +1,11 @@
 import { AxiosProgressEvent, CancelToken } from "axios";
+import { EncryptedBlob } from "../component/Uploader/core/uploader/encrypt/blob.ts";
 import i18n from "../i18n.ts";
 import {
   AdminListGroupResponse,
   AdminListService,
   BatchIDService,
+  CleanupTaskService,
   CreateStoragePolicyCorsService,
   Entity,
   FetchWOPIDiscoveryService,
@@ -16,6 +18,7 @@ import {
   ListEntityResponse,
   ListFileResponse,
   ListNodeResponse,
+  ListPaymentResponse as AdminListPaymentResponse,
   ListShareResponse as AdminListShareResponse,
   ListStoragePolicyResponse,
   ListTaskResponse,
@@ -39,6 +42,8 @@ import {
   User as UserEnt,
 } from "./dashboard.ts";
 import {
+  ArchiveListFilesResponse,
+  ArchiveListFilesService,
   CreateFileService,
   CreateViewerSessionService,
   DeleteFileService,
@@ -67,7 +72,7 @@ import {
   ViewerGroup,
   ViewerSessionResponse,
 } from "./explorer.ts";
-import { AppError, Code, CrHeaders, defaultOpts, send, ThunkResponse } from "./request.ts";
+import { AppError, Code, CrHeaders, defaultOpts, isRequestAbortedError, send, ThunkResponse } from "./request.ts";
 import { CreateDavAccountService, DavAccount, ListDavAccountsResponse, ListDavAccountsService } from "./setting.ts";
 import { ListShareResponse, ListShareService } from "./share.ts";
 import { CaptchaResponse, SiteConfig } from "./site.ts";
@@ -75,7 +80,6 @@ import {
   Capacity,
   FinishPasskeyLoginService,
   FinishPasskeyRegistrationService,
-  Group,
   LoginResponse,
   Passkey,
   PasskeyCredentialOption,
@@ -113,7 +117,7 @@ export function getSiteConfig(section: string): ThunkResponse<SiteConfig> {
         },
         {
           ...defaultOpts,
-          noCredential: section != "basic",
+          bypassSnackbar: (e) => isRequestAbortedError(e),
           errorSnackbarMsg: (e) => i18n.t("errLoadingSiteConfig", { ns: "common" }) + e.message,
         },
       ),
@@ -153,7 +157,7 @@ export function getCaptcha(): ThunkResponse<CaptchaResponse> {
         {
           ...defaultOpts,
           noCredential: true,
-          errorSnackbarMsg: (e) => i18n.t("captchaError", { ns: "common" }) + e.message,
+          errorSnackbarMsg: (e) => i18n.t("login.captchaError", { ns: "application" }) + e.message,
         },
       ),
     );
@@ -301,7 +305,7 @@ export function getUserInfo(uid: string): ThunkResponse<User> {
         },
         {
           ...defaultOpts,
-          bypassSnackbar: (_e) => skipSnackbar,
+          bypassSnackbar: (_e) => true,
         },
       ),
     );
@@ -371,6 +375,7 @@ export function sendRenameFile(req: RenameFileService): ThunkResponse<FileRespon
         },
         {
           ...defaultOpts,
+          bypassSnackbar: (e) => isRequestAbortedError(e),
         },
       ),
     );
@@ -719,16 +724,19 @@ export function sendUploadChunk(
   onProgress?: (progressEvent: AxiosProgressEvent) => void,
 ): ThunkResponse<UploadCredential> {
   return async (dispatch, _getState) => {
+    const streaming = chunk instanceof EncryptedBlob;
     return await dispatch(
       send(
         `/file/upload/${sessionID}/${index}`,
         {
-          data: chunk,
+          adapter: streaming ? "fetch" : "xhr",
+          data: streaming ? chunk.stream() : chunk,
           cancelToken: cancel,
           onUploadProgress: onProgress,
           method: "POST",
           headers: {
             "Content-Type": "application/octet-stream",
+            ...(streaming && { "X-Expected-Entity-Length": chunk.size?.toString() ?? "0" }),
           },
         },
         {
@@ -1010,6 +1018,12 @@ export function getFileDirectLinks(req: MultipleUriService): ThunkResponse<Direc
         },
       ),
     );
+  };
+}
+
+export function sendDeleteDirectLink(id: string): ThunkResponse {
+  return async (dispatch, _getState) => {
+    return await dispatch(send(`/file/source/${id}`, { method: "DELETE" }, { ...defaultOpts }));
   };
 }
 
@@ -1973,13 +1987,40 @@ export function sendImport(req: ImportWorkflowService): ThunkResponse<TaskRespon
   };
 }
 
-
 export function sendPatchViewSync(args: PatchViewSyncService): ThunkResponse<void> {
   return async (dispatch, _getState) => {
     return await dispatch(
       send(
         `/file/view`,
         { method: "PATCH", data: args },
+        {
+          ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+export function sendCleanupTask(args: CleanupTaskService): ThunkResponse<void> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        `/admin/queue/cleanup`,
+        { method: "POST", data: args },
+        {
+          ...defaultOpts,
+        },
+      ),
+    );
+  };
+}
+
+export function getArchiveListFiles(args: ArchiveListFilesService): ThunkResponse<ArchiveListFilesResponse> {
+  return async (dispatch, _getState) => {
+    return await dispatch(
+      send(
+        `/file/archive`,
+        { method: "GET", params: args },
         {
           ...defaultOpts,
         },

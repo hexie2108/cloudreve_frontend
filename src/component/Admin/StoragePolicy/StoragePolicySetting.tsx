@@ -15,7 +15,7 @@ import ArrowSync from "../../Icons/ArrowSync";
 import PageContainer from "../../Pages/PageContainer";
 import PageHeader from "../../Pages/PageHeader";
 import { BorderedCardClickable } from "../Common/AdminCard";
-import { Code } from "../Common/Code";
+import { Code } from "../../Common/Code.tsx";
 import TablePagination from "../Common/TablePagination";
 import AddWizardDialog, { AddWizardProps } from "./AddWizardDialog";
 import SelectProvider from "./SelectProvider";
@@ -28,6 +28,7 @@ import OssWizard from "./Wizards/OSS/OssWizard";
 import QiniuWizard from "./Wizards/Qiniu/QiniuWizard";
 import RemoteWizard from "./Wizards/Remote/RemoteWizard";
 import S3Wizard from "./Wizards/S3/S3Wizard";
+import KS3Wizard from "./Wizards/KS3/KS3Wizard";
 import UpyunWizard from "./Wizards/Upyun/UpyunWizard";
 
 export const PageQuery = "page";
@@ -60,6 +61,9 @@ export interface PolicyProps {
   credentialDes?: React.ReactNode;
   corsExposedHeaders?: string[];
   endpointNotEnforcePrefix?: boolean;
+  pro?: boolean;
+  regionCode?: string;
+  regionCodeDes?: React.ReactNode;
 }
 
 export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
@@ -69,6 +73,12 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     wizardSize: "sm",
     wizard: LocalWizard,
     chunkSizeDes: "policy.chunkSizeDes",
+  },
+  [PolicyType.load_balance]: {
+    name: "policy.load_balance",
+    img: "/static/img/lb.svg",
+    wizardSize: "sm",
+    pro: true,
   },
   [PolicyType.remote]: {
     name: "policy.remote",
@@ -94,6 +104,26 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
     chunkSizeMin: 5 * 1024 * 1024, //5MB
     chunkSizeMax: 5 * 1024 * 1024 * 1024, //5GB
     chunkSizeDes: "policy.chunkSizeDesS3",
+    regionCode: "policy.s3Region",
+    regionCodeDes: <Trans i18nKey={"policy.selectRegionDes"} ns="dashboard" components={[<Code />]} />,
+  },
+  [PolicyType.ks3]: {
+    name: "policy.ks3",
+    img: "/static/img/ks3.png",
+    wizardSize: "sm",
+    wizard: KS3Wizard,
+    bucketName: "policy.bucketName",
+    bucketType: "policy.bucketType",
+    endpointName: "policy.policyEndpoint",
+    endpointDes: <Trans i18nKey="policy.ks3selectRegionDes" ns="dashboard" components={[<Code />]} />,
+    akName: "Access Key",
+    skName: "Secret Key",
+    corsExposedHeaders: ["ETag"],
+    chunkSizeMin: 5 * 1024 * 1024, //5MB
+    chunkSizeMax: 5 * 1024 * 1024 * 1024, //5GB
+    chunkSizeDes: "policy.chunkSizeDesS3",
+    regionCode: "policy.s3Region",
+    regionCodeDes: <Trans i18nKey={"policy.ks3selectRegionDes"} ns="dashboard" components={[<Code />]} />,
   },
   [PolicyType.cos]: {
     name: "policy.cos",
@@ -167,6 +197,18 @@ export const PolicyPropsMap: Record<PolicyType, PolicyProps> = {
         components={[
           <Link href="https://ram.console.aliyun.com/profile/access-keys" target="_blank" />,
           <Link href="https://ram.console.aliyun.com/ram/overview" target="_blank" />,
+          <Code />,
+        ]}
+      />
+    ),
+    regionCode: "policy.s3Region",
+    regionCodeDes: (
+      <Trans
+        i18nKey={"policy.ossRegionDes"}
+        ns="dashboard"
+        components={[
+          <Code />,
+          <Link href="https://www.alibabacloud.com/help/oss/regions-and-endpoints" target="_blank" />,
           <Code />,
         ]}
       />
@@ -423,13 +465,13 @@ const StoragePolicySetting = () => {
               <Typography variant="h6">{t("policy.newStoragePolicy")}</Typography>
             </BorderedCardClickable>
           </Grid>
-          {!loading && policies.map((p) => <StoragePolicyCard key={p.name} policy={p} onRefresh={fetchPolicies} />)}
+          {!loading && policies.map((p) => <StoragePolicyCard key={p.id} policy={p} onRefresh={fetchPolicies} />)}
           {loading &&
             policies.length > 0 &&
-            policies.map((p) => <StoragePolicyCard key={`loading-${p.name}`} loading={true} />)}
+            policies.map((p) => <StoragePolicyCard key={`loading-${p.id}`} loading={true} />)}
           {loading &&
             policies.length === 0 &&
-            Array.from(Array(5)).map((_, index) => <StoragePolicyCard key={`loading-${index}`} loading={true} />)}
+            Array.from(Array(5)).map((_, index) => <StoragePolicyCard key={`loading-placeholder-${index}`} loading={true} />)}
         </Grid>
         {count > 0 && (
           <Box sx={{ mt: 1 }}>

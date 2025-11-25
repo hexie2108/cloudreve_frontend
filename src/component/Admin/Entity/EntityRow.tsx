@@ -10,9 +10,11 @@ import { sizeToString } from "../../../util";
 import { NoWrapTableCell, NoWrapTypography, SquareChip } from "../../Common/StyledComponents";
 import TimeBadge from "../../Common/TimeBadge";
 import UserAvatar from "../../Common/User/UserAvatar";
+import { cipherDisplayName } from "../../FileManager/Sidebar/BasicInfo";
 import { EntityTypeText } from "../../FileManager/Sidebar/Data";
 import Delete from "../../Icons/Delete";
 import Download from "../../Icons/Download";
+import ShieldLock from "../../Icons/ShieldLock";
 
 export interface EntityRowProps {
   entity?: Entity;
@@ -46,18 +48,25 @@ const EntityRow = ({
 
   const onOpenClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    var entityLink = window.open("", "_blank");
-    entityLink?.document.write("Loading entity URL...");
     setOpenLoading(true);
+
     dispatch(getEntityUrl(entity?.id ?? 0))
       .then((url) => {
-        entityLink ? (entityLink.location.href = url) : window.open(url, "_blank");
+        // 直接下载文件：使用a标签的download属性强制下载
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `entity-${entity?.id}`;
+        link.style.display = "none";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       })
       .finally(() => {
         setOpenLoading(false);
       })
-      .catch(() => {
-        entityLink && entityLink.close();
+      .catch((error) => {
+        console.error("Failed to get entity URL:", error);
       });
   };
 
@@ -137,6 +146,21 @@ const EntityRow = ({
           </Tooltip>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             {!entity?.reference_count && <SquareChip size="small" label={t("entity.waitForRecycle")} />}
+            {entity?.props?.encrypt_metadata?.algorithm && (
+              <Tooltip
+                title={t("application:fileManager.fullEncryption", {
+                  cipher: cipherDisplayName(entity?.props?.encrypt_metadata?.algorithm),
+                })}
+              >
+                <ShieldLock
+                  sx={{
+                    width: "20px",
+                    height: "20px",
+                    color: (theme) => theme.palette.success.main,
+                  }}
+                />
+              </Tooltip>
+            )}
           </Box>
         </Box>
       </NoWrapTableCell>

@@ -2,7 +2,8 @@
   "pageNotFound": "页面不存在",
   "unknownError": "未知错误",
   "errLoadingSiteConfig": "无法加载站点配置：",
-  "newVersionRefresh": "当前页面有新版本可用，准备刷新。",
+  "newVersionRefresh": "当前页面有新版本可用。",
+  "update": "更新",
   "errorDetails": "详情",
   "renderError": "页面渲染出现错误，请尝试刷新此页面。",
   "ok": "确定",
@@ -19,7 +20,7 @@
   "timeAgoLocaleCode": "zh_CN",
   "forEditorLocaleCode": "zh-CN",
   "artPlayerLocaleCode": "zh-cn",
-  "requestID": "请求 ID: {{id}}",
+  "requestID": "请求 ID：{{id}}",
   "object": "对象",
   "error": "错误",
   "areYouSure": "确认",
@@ -28,6 +29,13 @@
   "rowsPerPage": "每页行数",
   "custom": "自定义",
   "enter": "输入",
+  "captcha": {
+    "cap": {
+      "human": "我是人类",
+      "verifying": "验证中…",
+      "verified": "您通过了验证"
+    }
+  },
   "errors": {
     "401": "请先登录",
     "403": "你没有权限执行此操作",
@@ -72,7 +80,7 @@
     "40049": "文件大小超出限制",
     "40050": "文件类型不允许",
     "40051": "容量空间不足",
-    "40052": "对象名非法，请移除特殊字符",
+    "40052": "此文件名或扩展名不被允许",
     "40053": "不支持对根目录执行此操作",
     "40054": "话当前目录下已经有同名文件正在上传中，请尝试清空上传会话",
     "40055": "文件信息不一致",

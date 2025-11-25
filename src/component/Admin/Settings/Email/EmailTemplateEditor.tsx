@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Delete } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -15,7 +15,8 @@ import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 
 import { Trans, useTranslation } from "react-i18next";
 import { languages } from "../../../../i18n.ts";
 import CircularProgress from "../../../Common/CircularProgress.tsx";
-import { DenseFilledTextField, DenseSelect } from "../../../Common/StyledComponents.tsx";
+import { DenseFilledTextField, DenseSelect, SecondaryButton } from "../../../Common/StyledComponents.tsx";
+import Add from "../../../Icons/Add";
 import DraggableDialog from "../../../Dialogs/DraggableDialog.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
 import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
@@ -57,13 +58,16 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
       if (parsedTemplates.length === 0) {
         setTemplates([{ language: "en-US", title: "", body: "" }]);
       }
+      if (currentTab > parsedTemplates.length) {
+        setCurrentTab(0);
+      }
     } catch (e) {
       console.error("Failed to parse email template:", e);
       setTemplates([{ language: "en-US", title: "", body: "" }]);
     } finally {
       // Use setTimeout to ensure this runs after React finishes the update
       setTimeout(() => {
-        isUpdatingFromProp.current = false;
+        isUpdatingFromProp.current = true; // Prevent infinite loop
       }, 0);
     }
   }, [value]);
@@ -93,10 +97,12 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
     if (!newLanguageCode.trim()) return;
 
     // Check if language already exists
-    if (templates.some((t) => t.language === newLanguageCode)) {
-      // Could show an error message here
+    const langTemplateIndex = templates.findIndex((l) => l.language === newLanguageCode);
+    if (langTemplateIndex !== -1) {
       setNewLanguageCode("");
       setAddLanguageOpen(false);
+
+      setCurrentTab(langTemplateIndex);
       return;
     }
 
@@ -110,6 +116,22 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
 
     // Switch to the new tab
     setCurrentTab(templates.length);
+  };
+
+  const removeLanguage = (index: number) => {
+    isUpdatingFromProp.current = false; // Ensure this is a user interaction
+    const updatedTemplates = templates.filter((_, i) => i !== index);
+    setTemplates(updatedTemplates);
+
+    if (currentTab >= updatedTemplates.length) {
+      setCurrentTab(updatedTemplates.length - 1); // Move to the last tab if current is out of range
+    }
+  };
+
+  const setPreferredLanguage = (index: number) => {
+    isUpdatingFromProp.current = false; // Ensure this is a user interaction
+    setTemplates([templates[index], ...templates.filter((_, i) => i !== index)]);
+    setCurrentTab(0); // Switch to the first tab as the preferred language is now at the top
   };
 
   const openMagicVar = useCallback((e: React.MouseEvent<HTMLElement>) => {
@@ -128,9 +150,10 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
           scrollButtons="auto"
           sx={{ flexGrow: 1 }}
         >
-          {templates.map((template, index) => (
-            <Tab key={index} label={template.language} />
-          ))}
+          {templates.map((template, index) => {
+            const lang = languages.find((l) => l.code === template.language);
+            return <Tab key={index} label={lang ? lang.displayName : template.language} />;
+          })}
         </Tabs>
         <Button
           startIcon={<Add />}
@@ -152,15 +175,40 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
           {currentTab === index && (
             <Box>
               <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: index === 0 ? 0 : 1 }}>
+                  {t("settings.preferredLanguage")}
+                </Typography>
+                {index != 0 && (
+                  <Box>
+                    <SecondaryButton
+                      variant="contained"
+                      onClick={() => (setPreferredLanguage(index))}
+                    >
+                      {t("settings.setAsPreferredLanguage")}
+                    </SecondaryButton>
+                  </Box>
+                )}
+                <NoMarginHelperText>
+                  {t(index === 0 ? "settings.alreadyAsPreferredLanguageDes" : "settings.setAsPreferredLanguageDes")}
+                </NoMarginHelperText>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   {t("settings.emailSubject")}
                 </Typography>
                 <DenseFilledTextField
                   fullWidth
                   value={template.title}
-                  onChange={(e) => updateTemplate(index, "title", e.target.value)}
+                  onChange={(e) => updateTemplate(index, "title", e.target.value || "")}
                 />
-                <NoMarginHelperText>{t("settings.emailSubjectDes")}</NoMarginHelperText>
+                <NoMarginHelperText>
+                  <Trans
+                    i18nKey={"settings.emailSubjectDes"}
+                    ns={"dashboard"}
+                    components={[<Link onClick={openMagicVar} href={"#"} />]}
+                  />
+                </NoMarginHelperText>
               </FormControl>
 
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -183,13 +231,36 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ value, onChan
                   />
                 </Suspense>
               </Box>
-              <NoMarginHelperText>
+              <NoMarginHelperText sx={{ mb: 2 }}>
                 <Trans
                   i18nKey={"settings.emailBodyDes"}
                   ns={"dashboard"}
                   components={[<Link onClick={openMagicVar} href={"#"} />]}
                 />
               </NoMarginHelperText>
+
+              <FormControl fullWidth>
+                <Typography variant="subtitle2" sx={{ mb: index === 0 ? 0 : 1 }}>
+                  {t("settings.removeLanguage")}
+                </Typography>
+                {index != 0 && (
+                  <Box>
+                    <Button
+                      startIcon={<Delete />}
+                      variant="contained"
+                      color="error"
+                      onClick={() => removeLanguage(index)}
+                    >
+                      {t("settings.removeLanguageBtn")}
+                    </Button>
+                  </Box>
+                )}
+                {index === 0 && (
+                  <NoMarginHelperText>
+                    {t("settings.cannotRemovePreferredLanguageDes")}
+                  </NoMarginHelperText>
+                )}
+              </FormControl>
             </Box>
           )}
         </Box>

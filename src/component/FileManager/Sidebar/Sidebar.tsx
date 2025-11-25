@@ -1,10 +1,10 @@
-import { RadiusFrame } from "../../Frame/RadiusFrame.tsx";
-import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { Box, Collapse } from "@mui/material";
-import SidebarContent from "./SidebarContent.tsx";
 import { useCallback, useEffect, useState } from "react";
-import { FileResponse } from "../../../api/explorer.ts";
 import { getFileInfo } from "../../../api/api.ts";
+import { FileResponse } from "../../../api/explorer.ts";
+import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
+import { RadiusFrame } from "../../Frame/RadiusFrame.tsx";
+import SidebarContent from "./SidebarContent.tsx";
 
 export interface SideBarProps {
   inPhotoViewer?: boolean;
@@ -13,13 +13,9 @@ export interface SideBarProps {
 const Sidebar = ({ inPhotoViewer }: SideBarProps) => {
   const dispatch = useAppDispatch();
   const sidebarOpen = useAppSelector((state) => state.globalState.sidebarOpen);
-  const sidebarTarget = useAppSelector(
-    (state) => state.globalState.sidebarTarget,
-  );
+  const sidebarTarget = useAppSelector((state) => state.globalState.sidebarTarget);
   // null: not valid, undefined: not loaded, FileResponse: loaded
-  const [target, setTarget] = useState<FileResponse | undefined | null>(
-    undefined,
-  );
+  const [target, setTarget] = useState<FileResponse | undefined | null>(undefined);
 
   const loadExtendedInfo = useCallback(
     (path: string) => {
@@ -29,7 +25,7 @@ const Sidebar = ({ inPhotoViewer }: SideBarProps) => {
           extended: true,
         }),
       ).then((res) => {
-        setTarget(res);
+        setTarget((r) => ({ ...res, capability: r?.capability }));
       });
     },
     [target, dispatch, setTarget],
@@ -72,12 +68,11 @@ const Sidebar = ({ inPhotoViewer }: SideBarProps) => {
             width: "300px",
             height: "100%",
             ml: 1,
-            borderRadius: (theme) =>
-              inPhotoViewer ? 0 : theme.shape.borderRadius / 8,
+            borderRadius: (theme) => (inPhotoViewer ? 0 : theme.shape.borderRadius / 8),
           }}
           withBorder={!inPhotoViewer}
         >
-          <SidebarContent inPhotoViewer={inPhotoViewer} target={target} />
+          <SidebarContent inPhotoViewer={inPhotoViewer} target={target} setTarget={setTarget} />
         </RadiusFrame>
       </Collapse>
     </Box>

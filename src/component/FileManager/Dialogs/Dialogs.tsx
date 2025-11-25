@@ -13,6 +13,7 @@ import SaveAs from "./SaveAs.tsx";
 import Photopea from "../../Viewers/Photopea/Photopea.tsx";
 import OpenWith from "./OpenWith.tsx";
 import Wopi from "../../Viewers/Wopi.tsx";
+import ArchivePreview from "../../Viewers/ArchivePreview/ArchivePreview.tsx";
 import CodeViewer from "../../Viewers/CodeViewer/CodeViewer.tsx";
 import DrawIOViewer from "../../Viewers/DrawIO/DrawIOViewer.tsx";
 import MarkdownViewer from "../../Viewers/MarkdownEditor/MarkdownViewer.tsx";
@@ -20,6 +21,7 @@ import VideoViewer from "../../Viewers/Video/VideoViewer.tsx";
 import PdfViewer from "../../Viewers/PdfViewer.tsx";
 import CustomViewer from "../../Viewers/CustomViewer.tsx";
 import EpubViewer from "../../Viewers/EpubViewer/EpubViewer.tsx";
+import ExcalidrawViewer from "../../Viewers/Excalidraw/ExcalidrawViewer.tsx";
 import CreateNew from "./CreateNew.tsx";
 import { useAppSelector } from "../../../redux/hooks.ts";
 import CreateArchive from "./CreateArchive.tsx";
@@ -29,6 +31,7 @@ import AdvanceSearch from "../Search/AdvanceSearch/AdvanceSearch.tsx";
 import React from "react";
 import ColumnSetting from "../Explorer/ListView/ColumnSetting.tsx";
 import DirectLinks from "./DirectLinks.tsx";
+import DirectLinksControl from "./DirectLinksControl.tsx";
 
 const Dialogs = () => {
   const showCreateArchive = useAppSelector((state) => state.globalState.createArchiveDialogOpen);
@@ -37,6 +40,9 @@ const Dialogs = () => {
   const showAdvancedSearch = useAppSelector((state) => state.globalState.advanceSearchOpen);
   const showListViewColumnSetting = useAppSelector((state) => state.globalState.listViewColumnSettingDialogOpen);
   const directLink = useAppSelector((state) => state.globalState.directLinkDialogOpen);
+  const excalidrawViewer = useAppSelector((state) => state.globalState.excalidrawViewer);
+  const directLinkManagement = useAppSelector((state) => state.globalState.directLinkManagementDialogOpen);
+  const archivePreview = useAppSelector((state) => state.globalState.archiveViewer);
 
   return (
     <>
@@ -69,6 +75,9 @@ const Dialogs = () => {
       {showAdvancedSearch != undefined && <AdvanceSearch />}
       {showListViewColumnSetting != undefined && <ColumnSetting />}
       {directLink != undefined && <DirectLinks />}
+      {excalidrawViewer != undefined && <ExcalidrawViewer />}
+      {directLinkManagement != undefined && <DirectLinksControl />}
+      {archivePreview != undefined && <ArchivePreview />}
     </>
   );
 };

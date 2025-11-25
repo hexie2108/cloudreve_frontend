@@ -1,11 +1,19 @@
 import dayjs from "dayjs";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { closeUploadTaskList, openUploadTaskList, setUploadProgress } from "../../redux/globalStateSlice.ts";
+import { ContextMenuTypes } from "../../redux/fileManagerSlice.ts";
+import {
+  closeUploadTaskList,
+  openUploadTaskList,
+  setUploadProgress,
+  setUploadRawFiles,
+} from "../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
 import { refreshFileList, updateUserCapacity } from "../../redux/thunks/filemanager.ts";
 import SessionManager, { UserSettings } from "../../session";
+import useActionDisplayOpt from "../FileManager/ContextMenu/useActionDisplayOpt.ts";
+import { FileManagerIndex } from "../FileManager/FileManager.tsx";
 import UploadManager, { SelectType } from "./core";
 import { UploaderError } from "./core/errors";
 import Base, { Status } from "./core/uploader/base.ts";
@@ -26,13 +34,28 @@ const Uploader = () => {
   const [uploaders, setUploaders] = useState<Base[]>([]);
   const [dropBgOpen, setDropBgOpen] = useState(false);
 
+  const uploadEnabled = useRef<boolean>(false);
+
   const totalProgress = useAppSelector((state) => state.globalState.uploadProgress);
   const taskListOpen = useAppSelector((state) => state.globalState.uploadTaskListOpen);
-  const parent = useAppSelector((state) => state.fileManager[0].list?.parent);
-  const path = useAppSelector((state) => state.fileManager[0].pure_path);
-  const policy = useAppSelector((state) => state.fileManager[0].list?.storage_policy);
+  const parent = useAppSelector((state) => state.fileManager[FileManagerIndex.main].list?.parent);
+  const path = useAppSelector((state) => state.fileManager[FileManagerIndex.main].pure_path);
+  const policy = useAppSelector((state) => state.fileManager[FileManagerIndex.main].list?.storage_policy);
   const selectFileSignal = useAppSelector((state) => state.globalState.uploadFileSignal);
   const selectFolderSignal = useAppSelector((state) => state.globalState.uploadFolderSignal);
+  const uploadRawPromiseId = useAppSelector((state) => state.globalState.uploadRawPromiseId);
+  const uploadRawFiles = useAppSelector((state) => state.globalState.uploadRawFiles);
+
+  const displayOpt = useActionDisplayOpt([], ContextMenuTypes.empty, parent, FileManagerIndex.main);
+  const exclidrawOpen = useAppSelector((state) => state.globalState.excalidrawViewer?.open);
+
+  useEffect(() => {
+    if (!parent || exclidrawOpen) {
+      uploadEnabled.current = false;
+      return;
+    }
+    uploadEnabled.current = displayOpt.showUpload ?? false;
+  }, [parent, displayOpt.showUpload, exclidrawOpen]);
 
   const taskAdded = useCallback(
     (original?: Base) => (tasks: Base[]) => {
@@ -69,12 +92,19 @@ const Uploader = () => {
         enqueueSnackbar(msg, { variant: type });
       },
       onDropOver: (_e) => {
+        if (!uploadEnabled.current) {
+          return;
+        }
         dragCounter++;
         setDropBgOpen((value) => !value);
       },
       onDropLeave: (_e) => {
+        if (!uploadEnabled.current) {
+          return false;
+        }
         dragCounter--;
         setDropBgOpen((value) => !value);
+        return true;
       },
       onProactiveFileAdded: taskAdded(),
       onPoolEmpty: () => {
@@ -84,11 +114,11 @@ const Uploader = () => {
         }, 1000);
       },
     });
-  }, []);
+  }, [enqueueSnackbar, taskAdded, dispatch]);
 
   useEffect(() => {
     uploadManager.setPolicy(policy, path);
-  }, [policy]);
+  }, [policy, path]);
 
   const handleUploaderError = useCallback(
     (e: any) => {
@@ -140,6 +170,15 @@ const Uploader = () => {
   );
 
   useEffect(() => {
+    if (uploadRawFiles && uploadRawFiles.length > 0) {
+      uploadManager.addRawFiles(uploadRawFiles, getClipboardFileName, uploadRawPromiseId).catch((e) => {
+        handleUploaderError(e);
+      });
+      dispatch(setUploadRawFiles({ files: [], promiseId: [] }));
+    }
+  }, [uploadRawFiles, uploadRawPromiseId, handleUploaderError, uploadManager]);
+
+  useEffect(() => {
     const unfinished = uploadManager.resumeTasks();
     setUploaders((uploaders) => [
       ...uploaders,
@@ -147,24 +186,23 @@ const Uploader = () => {
     ]);
     if (!totalProgressCollector) {
       totalProgressCollector = setInterval(() => {
-        let progress = {
-          totalSize: 0,
-          processedSize: 0,
-          total: 0,
-          processed: 0,
-        };
+        let totalSize = 0;
+        let processedSize = 0;
+        let total = 0;
+        let processed = 0;
+
         setUploaders((uploaders) => {
           uploaders.forEach((u) => {
             if (u.id <= lastProgressStart) {
               return;
             }
 
-            progress.totalSize += u.task.size;
-            progress.total += 1;
+            totalSize += u.task.size;
+            total += 1;
 
             if (u.status === Status.finished || u.status === Status.canceled || u.status === Status.error) {
-              progress.processedSize += u.task.size;
-              progress.processed += 1;
+              processedSize += u.task.size;
+              processed += 1;
             }
 
             if (
@@ -175,11 +213,11 @@ const Uploader = () => {
               u.status === Status.processing ||
               u.status === Status.finishing
             ) {
-              progress.processedSize += u.progress ? u.progress.total.loaded : 0;
+              processedSize += u.progress ? u.progress.total.loaded : 0;
             }
           });
 
-          if (progress.total > 0 && progress.processed === progress.total) {
+          if (total > 0 && processed === total) {
             lastProgressStart = uploaders[uploaders.length - 1].id;
           }
           return uploaders;
@@ -187,12 +225,21 @@ const Uploader = () => {
 
         dispatch(
           setUploadProgress({
-            progress,
-            count: progress.total,
+            progress: {
+              totalSize,
+              processedSize,
+            },
+            count: total,
           }),
         );
       }, 2000);
     }
+
+    return () => {
+      if (uploadManager) {
+        uploadManager.destroy();
+      }
+    };
   }, []);
 
   useEffect(() => {

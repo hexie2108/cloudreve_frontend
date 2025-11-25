@@ -1,4 +1,5 @@
-import { Box, SvgIconProps } from "@mui/material";
+import { Icon as Iconify } from "@iconify/react";
+import { Box, SvgIconProps, useTheme } from "@mui/material";
 import SvgIcon from "@mui/material/SvgIcon/SvgIcon";
 import { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,8 @@ import CloudDownload from "../../Icons/CloudDownload.tsx";
 import CloudDownloadOutlined from "../../Icons/CloudDownloadOutlined.tsx";
 import CubeSync from "../../Icons/CubeSync.tsx";
 import CubeSyncFilled from "../../Icons/CubeSyncFilled.tsx";
+import CubeTree from "../../Icons/CubeTree.tsx";
+import CubeTreeFilled from "../../Icons/CubeTreeFilled.tsx";
 import DataHistogram from "../../Icons/DataHistogram.tsx";
 import DataHistogramFilled from "../../Icons/DataHistogramFilled.tsx";
 import Folder from "../../Icons/Folder.tsx";
@@ -37,6 +40,8 @@ import ShareAndroid from "../../Icons/ShareAndroid.tsx";
 import ShareOutlined from "../../Icons/ShareOutlined.tsx";
 import Storage from "../../Icons/Storage.tsx";
 import StorageOutlined from "../../Icons/StorageOutlined.tsx";
+import Warning from "../../Icons/Warning.tsx";
+import WarningOutlined from "../../Icons/WarningOutlined.tsx";
 import WrenchSettings from "../../Icons/WrenchSettings.tsx";
 import { ProChip } from "../../Pages/Setting/SettingForm.tsx";
 import NavIconTransition from "./NavIconTransition.tsx";
@@ -44,7 +49,8 @@ import SideNavItem from "./SideNavItem.tsx";
 
 export interface NavigationItem {
   label: string;
-  icon: ((props: SvgIconProps) => JSX.Element)[] | (typeof SvgIcon)[];
+  icon?: ((props: SvgIconProps) => JSX.Element)[] | (typeof SvgIcon)[];
+  iconifyName?: string;
   path: string;
   pro?: boolean;
 }
@@ -80,6 +86,7 @@ export const SideNavItemComponent = ({ item }: { item: NavigationItem }) => {
   const { t } = useTranslation("application");
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
   const [proOpen, setProOpen] = useState(false);
   const active = useMemo(() => {
     return location.pathname == item.path || location.pathname.startsWith(item.path + "/");
@@ -89,7 +96,9 @@ export const SideNavItemComponent = ({ item }: { item: NavigationItem }) => {
       {item.pro && <ProDialog open={proOpen} onClose={() => setProOpen(false)} />}
       <SideNavItem
         key={item.label}
-        onClick={() => (item.pro ? setProOpen(true) : navigate(item.path))}
+        onClick={() =>
+          item.pro ? setProOpen(true) : item.iconifyName ? window.open(item.path, "_blank") : navigate(item.path)
+        }
         label={
           item.pro ? (
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -110,12 +119,29 @@ export const SideNavItemComponent = ({ item }: { item: NavigationItem }) => {
         }
         active={active}
         icon={
-          <NavIconTransition
-            sx={{ px: 0, py: 0, pr: "14px", height: "20px" }}
-            iconProps={{ fontSize: "small", color: "action" }}
-            fileIcon={item.icon}
-            active={active}
-          />
+          !item.icon ? (
+            <Box
+              sx={{
+                width: 20,
+                height: 20,
+              }}
+            >
+              <Iconify
+                icon={item.iconifyName ?? ""}
+                height={20}
+                style={{
+                  color: theme.palette.action.active,
+                }}
+              />
+            </Box>
+          ) : (
+            <NavIconTransition
+              sx={{ px: 0, py: 0, pr: "14px", height: "20px" }}
+              iconProps={{ fontSize: "small", color: "action" }}
+              fileIcon={item.icon}
+              active={active}
+            />
+          )
         }
       />
     </>
@@ -133,6 +159,11 @@ AdminNavigationItems = [
     label: "dashboard:nav.settings",
     icon: [Setting, SettingsOutlined],
     path: "/admin/settings",
+  },
+  {
+    label: "dashboard:nav.fileSystem",
+    icon: [CubeTreeFilled, CubeTree],
+    path: "/admin/filesystem",
   },
   {
     label: "dashboard:nav.storagePolicy",
@@ -186,6 +217,12 @@ AdminNavigationItems = [
     path: "/admin/event",
     pro: true,
   },
+  {
+    label: "dashboard:nav.abuseReport",
+    icon: [Warning, WarningOutlined],
+    path: "/admin/abuse",
+    pro: true,
+  },
 ];
 
 export const AdminPageNavigation = memo(() => {
@@ -222,6 +259,7 @@ const PageNavigation = () => {
     return GroupBS(user?.user).enabled(GroupPermission.webdav) || appPromotionEnabled;
   }, [user?.user?.group?.permission, appPromotionEnabled]);
   const isLogin = !!user;
+  const customNavItems = useAppSelector((state) => state.siteConfig.basic.config.custom_nav_items);
 
   return (
     <>
@@ -235,6 +273,20 @@ const PageNavigation = () => {
             <SideNavItemComponent item={TaskNavigationItem} />
             {remoteDownloadEnabled && <SideNavItemComponent item={RemoteDownloadNavigationItem} />}
           </>
+        </Box>
+      )}
+      {customNavItems && customNavItems.length > 0 && (
+        <Box>
+          {customNavItems.map((item) => (
+            <SideNavItemComponent
+              key={item.name}
+              item={{
+                label: item.name,
+                iconifyName: item.icon,
+                path: item.url,
+              }}
+            />
+          ))}
         </Box>
       )}
       {isLogin && isAdmin && (

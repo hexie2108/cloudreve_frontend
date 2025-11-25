@@ -1,6 +1,6 @@
-import { EntityType, PaginationResults, PolicyType } from "./explorer.ts";
+import { EncryptionCipher, EntityType, PaginationResults, PolicyType } from "./explorer.ts";
 import { Capacity } from "./user.ts";
-import { TaskStatus, TaskSummary } from "./workflow.ts";
+import { TaskStatus, TaskSummary, TaskType } from "./workflow.ts";
 
 export interface MetricsSummary {
   dates: string[];
@@ -206,6 +206,9 @@ export enum NodeStatus {
 export interface PolicySetting {
   token?: string;
   file_type?: string[];
+  is_file_type_deny_list?: boolean;
+  file_regexp?: string;
+  is_name_regexp_deny_list?: boolean;
   od_redirect?: string;
   custom_proxy?: boolean;
   proxy_server?: string;
@@ -230,6 +233,9 @@ export interface PolicySetting {
   stream_saver?: boolean;
   use_cname?: boolean;
   source_auth?: boolean;
+  qiniu_upload_cdn?: boolean;
+  chunk_concurrency?: number;
+  encryption?: boolean;
 }
 
 export interface User extends CommonMixin {
@@ -404,9 +410,18 @@ export interface Entity extends CommonMixin {
     storage_policy?: StoragePolicy;
     file?: File[];
   };
+  props?: EntityProps;
 
   user_hash_id?: string;
   user_hash_id_map?: Record<number, string>;
+}
+
+export interface EntityProps {
+  encrypt_metadata?: EncryptMetadata;
+}
+
+export interface EncryptMetadata {
+  algorithm: EncryptionCipher;
 }
 
 export interface Metadata extends CommonMixin {
@@ -539,4 +554,10 @@ export interface Share extends CommonMixin {
 export interface ListShareResponse {
   shares: Share[];
   pagination: PaginationResults;
+}
+
+export interface CleanupTaskService {
+  not_after: string;
+  types?: TaskType[];
+  status?: TaskStatus[];
 }

@@ -1,12 +1,15 @@
 import dayjs from "dayjs";
 import { getFileInfo, getFileList, getUserCapacity, sendPatchViewSync } from "../../api/api.ts";
-import { ExplorerView, FileResponse, ListResponse, Metadata } from "../../api/explorer.ts";
+import { ExplorerView, FileResponse, FileType, ListResponse, Metadata } from "../../api/explorer.ts";
 import { getActionOpt } from "../../component/FileManager/ContextMenu/useActionDisplayOpt.ts";
 import { ListViewColumnSetting } from "../../component/FileManager/Explorer/ListView/Column.tsx";
 import { FileManagerIndex } from "../../component/FileManager/FileManager.tsx";
+import { getPaginationState } from "../../component/FileManager/Pagination/PaginationFooter.tsx";
 import { Condition, ConditionType } from "../../component/FileManager/Search/AdvanceSearch/ConditionBox.tsx";
 import { MinPageSize } from "../../component/FileManager/TopBar/ViewOptionPopover.tsx";
 import { SelectType } from "../../component/Uploader/core";
+import { Task } from "../../component/Uploader/core/types.ts";
+import { uploadPromisePool } from "../../component/Uploader/core/uploader/base.ts";
 import { defaultPath } from "../../hooks/useNavigation.tsx";
 import { router } from "../../router";
 import SessionManager, { UserSettings } from "../../session";
@@ -46,11 +49,16 @@ import {
   setAdvanceSearch,
   setPinFileDialog,
   setSearchPopup,
+  setShareReadmeDetect,
   setUploadFromClipboardDialog,
+  setUploadRawFiles,
 } from "../globalStateSlice.ts";
-import { Viewers } from "../siteConfigSlice.ts";
+import { Viewers, ViewersByID } from "../siteConfigSlice.ts";
 import { AppThunk } from "../store.ts";
+import { promiseId } from "./dialog.ts";
 import { deleteFile, openFileContextMenu } from "./file.ts";
+import { queueLoadShareInfo } from "./share.ts";
+import { openViewer } from "./viewer.ts";
 
 export function setTargetPath(index: number, path: string): AppThunk {
   return async (dispatch, _getState) => {
@@ -110,7 +118,56 @@ export function beforePathChange(index: number): AppThunk {
   };
 }
 
-export function navigateReconcile(index: number, opt?: NavigateReconcileOptions): AppThunk {
+export function checkReadMeEnabled(index: number): AppThunk {
+  return async (dispatch, getState) => {
+    const { path, current_fs } = getState().fileManager[index];
+    if (path && current_fs == Filesystem.share) {
+      try {
+        const info = await dispatch(queueLoadShareInfo(new CrUri(path), false));
+        dispatch(setShareReadmeDetect(info?.show_readme && info.source_type == FileType.folder));
+      } catch (e) {
+        dispatch(setShareReadmeDetect(false));
+      }
+    } else {
+      dispatch(setShareReadmeDetect(false));
+    }
+  };
+}
+
+export function checkOpenViewerQuery(index: number): AppThunk {
+  return async (dispatch, getState) => {
+    const currentUrl = new URL(window.location.href);
+    const viewer = currentUrl.searchParams.get("viewer");
+    const fileId = currentUrl.searchParams.get("open");
+    const version = currentUrl.searchParams.get("version");
+    const size = currentUrl.searchParams.get("size");
+
+    // Clear viewer-related query parameters
+    currentUrl.searchParams.delete("viewer");
+    currentUrl.searchParams.delete("open");
+    currentUrl.searchParams.delete("version");
+    currentUrl.searchParams.delete("size");
+    window.history.replaceState({}, "", currentUrl.toString());
+
+    if (!fileId || !viewer || !ViewersByID[viewer]) {
+      return;
+    }
+
+    const { files: list, pagination } = getState().fileManager[index]?.list ?? {};
+    if (list) {
+      // Find readme file from highest to lowest priority
+      const found = list.find((file) => file.id === fileId);
+      if (found) {
+        dispatch(openViewer(found, ViewersByID[viewer], parseInt(size ?? "0"), version ?? undefined, true));
+        return;
+      }
+    }
+
+    alert("openViewer");
+  };
+}
+
+export function navigateReconcile(index: number, opt?: NavigateReconcileOptions): AppThunk<Promise<void>> {
   return async (dispatch, getState) => {
     const timeNow = dayjs().valueOf();
     const {
@@ -154,6 +211,14 @@ export function navigateReconcile(index: number, opt?: NavigateReconcileOptions)
             : {}),
         }),
       );
+
+      // DB sorting has limit on string comparison, so we need to
+      // sort by localCompare, if all files in current page is loaded, and sortBy is name.
+      const sortBy = listRes.view ? listRes.view.order : currentView?.order;
+      const orderDirection = listRes.view ? listRes.view.order_direction : currentView?.order_direction;
+      if (sortBy == "name" && !getPaginationState(list?.pagination).moreItems) {
+        listRes.files = sortByLocalCompare(listRes.files, listRes.mixed_type, orderDirection == "desc");
+      }
     } catch (e) {
       if (currentGeneration == generation) {
         dispatch(
@@ -435,7 +500,13 @@ export function retrySharePassword(index: number, password: string): AppThunk {
   };
 }
 
-export function searchMetadata(index: number, metaKey: string, metaValue?: string, newTab?: boolean): AppThunk {
+export function searchMetadata(
+  index: number,
+  metaKey: string,
+  metaValue?: string,
+  newTab?: boolean,
+  strongMatch?: boolean,
+): AppThunk {
   return async (dispatch, getState) => {
     const { fileManager } = getState();
     const fm = fileManager[index];
@@ -445,7 +516,10 @@ export function searchMetadata(index: number, metaKey: string, metaValue?: strin
     }
 
     const rootUri = new CrUri(root);
-    rootUri.addQuery(UriQuery.metadata_prefix + metaKey, metaValue ?? "");
+    rootUri.addQuery(
+      (strongMatch ? UriQuery.metadata_strong_match : UriQuery.metadata_prefix) + metaKey,
+      metaValue ?? "",
+    );
     dispatch(navigateToPath(index, rootUri.toString(), undefined, newTab));
   };
 }
@@ -518,11 +592,17 @@ export function advancedSearch(index: number, conditions: Condition[]): AppThunk
           }
           break;
         case ConditionType.metadata:
-          if (!params.metadata) {
-            params.metadata = {};
-          }
-          if (condition.metadata_key) {
+          if (condition.metadata_key && !condition.metadata_strong_match) {
+            if (!params.metadata) {
+              params.metadata = {};
+            }
             params.metadata[condition.metadata_key] = condition.metadata_value ?? "";
+          }
+          if (condition.metadata_key && condition.metadata_strong_match) {
+            if (!params.metadata_strong_match) {
+              params.metadata_strong_match = {};
+            }
+            params.metadata_strong_match[condition.metadata_key] = condition.metadata_value ?? "";
           }
           break;
         case ConditionType.size:
@@ -669,7 +749,7 @@ export function syncViewSettings(
       (parent?.owned || crUri.fs() == Filesystem.trash || crUri.fs() == Filesystem.shared_with_me);
 
     const currentView: ExplorerView = {
-      page_size: pageSize(fm),
+      page_size: Math.max(MinPageSize, pageSize(fm)),
       order: fm.sortBy ?? "created_at",
       order_direction: fm.sortDirection ?? "asc",
       view: fm.layout ?? Layouts.grid,
@@ -707,4 +787,130 @@ export function applyGalleryWidth(index: number, width: number): AppThunk {
     SessionManager.set(UserSettings.GalleryWidth, width);
     dispatch(setFmLoading({ index, value: false }));
   };
+}
+
+export function uploadRawFile(files: File): AppThunk<Promise<Task>> {
+  return async (dispatch, _getState) => {
+    const id = promiseId();
+    return new Promise<Task>((resolve, reject) => {
+      uploadPromisePool[id] = { resolve, reject };
+      dispatch(
+        setUploadRawFiles({
+          files: [files],
+          promiseId: [id],
+        }),
+      );
+    });
+  };
+}
+
+function sortByLocalCompare(files: FileResponse[], mixed?: boolean, isDesc?: boolean): FileResponse[] {
+  if (files.length === 0) {
+    return files;
+  }
+
+  const descending = isDesc ?? false;
+
+  // If mixed is true, sort all files together
+  if (mixed) {
+    return files.slice().sort((a, b) => {
+      const result = a.name.localeCompare(b.name);
+      return descending ? -result : result;
+    });
+  }
+
+  // If mixed is false, separate folders and files, then sort each part
+  const sortedFiles = files.slice();
+
+  // Binary search to find the division between folders and files
+  let left = 0;
+  let right = sortedFiles.length - 1;
+  let divisionIndex = -1;
+
+  // First, we need to find if there's a division at all
+  let hasFolder = false;
+  let hasFile = false;
+  for (const file of sortedFiles) {
+    if (file.type === FileType.folder) hasFolder = true;
+    if (file.type === FileType.file) hasFile = true;
+  }
+
+  if (!hasFolder || !hasFile) {
+    // All items are the same type, just sort normally
+    return sortedFiles.sort((a, b) => {
+      const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
+        numeric: true,
+        ignorePunctuation: true,
+      });
+      return descending ? -result : result;
+    });
+  }
+
+  // Find the division using binary search
+  // We're looking for the first file (type 0) after folders (type 1)
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+
+    if (sortedFiles[mid].type === FileType.folder) {
+      // Check if next item is a file
+      if (mid + 1 < sortedFiles.length && sortedFiles[mid + 1].type === FileType.file) {
+        divisionIndex = mid + 1;
+        break;
+      }
+      left = mid + 1;
+    } else {
+      // This is a file, look left for the division
+      if (mid === 0 || sortedFiles[mid - 1].type === FileType.folder) {
+        divisionIndex = mid;
+        break;
+      }
+      right = mid - 1;
+    }
+  }
+
+  // If no clear division found, fallback to linear search
+  if (divisionIndex === -1) {
+    for (let i = 0; i < sortedFiles.length; i++) {
+      if (sortedFiles[i].type === FileType.file) {
+        divisionIndex = i;
+        break;
+      }
+    }
+  }
+
+  let folders: FileResponse[] = [];
+  let filesOnly: FileResponse[] = [];
+
+  if (divisionIndex === -1) {
+    // All are folders
+    folders = sortedFiles;
+  } else if (divisionIndex === 0) {
+    // All are files
+    filesOnly = sortedFiles;
+  } else {
+    // Split into folders and files
+    folders = sortedFiles.slice(0, divisionIndex);
+    filesOnly = sortedFiles.slice(divisionIndex);
+  }
+
+  // Sort folders by name
+  folders.sort((a, b) => {
+    const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
+      numeric: true,
+      ignorePunctuation: true,
+    });
+    return descending ? -result : result;
+  });
+
+  // Sort files by name
+  filesOnly.sort((a, b) => {
+    const result = a.name.localeCompare(b.name, navigator.languages[0] || navigator.language, {
+      numeric: true,
+      ignorePunctuation: true,
+    });
+    return descending ? -result : result;
+  });
+
+  // Return folders first, then files
+  return [...folders, ...filesOnly];
 }

@@ -4,6 +4,8 @@ export interface ArchiveWorkflowService {
   src: string[];
   dst: string;
   encoding?: string;
+  password?: string;
+  file_mask?: string[];
 }
 
 export interface TaskListResponse {

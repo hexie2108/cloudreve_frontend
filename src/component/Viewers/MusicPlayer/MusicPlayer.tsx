@@ -1,17 +1,18 @@
 import { IconButton, Tooltip } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
-import MusicNote2Play from "../../Icons/MusicNote2Play.tsx";
 import { getFileEntityUrl } from "../../../api/api.ts";
-import { getFileLinkedUri } from "../../../util";
-import PlayerPopup from "./PlayerPopup.tsx";
+import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import SessionManager, { UserSettings } from "../../../session";
+import { getFileLinkedUri } from "../../../util";
 import MusicNote2 from "../../Icons/MusicNote2.tsx";
+import MusicNote2Play from "../../Icons/MusicNote2Play.tsx";
+import PlayerPopup from "./PlayerPopup.tsx";
 
 export const LoopMode = {
   list_repeat: 0,
   single_repeat: 1,
   shuffle: 2,
+  play_once: 3,
 };
 
 const MusicPlayer = () => {
@@ -27,6 +28,7 @@ const MusicPlayer = () => {
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
   const [loopMode, setLoopMode] = useState(LoopMode.list_repeat);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const playHistory = useRef<number[]>([]);
 
   useEffect(() => {
@@ -62,12 +64,13 @@ const MusicPlayer = () => {
           audio.current.currentTime = 0;
           audio.current.play();
           audio.current.volume = latestVolume ?? volume;
+          audio.current.playbackRate = playbackSpeed;
         } catch (e) {
           console.error(e);
         }
       }
     },
-    [playerState, volume],
+    [playerState, volume, playbackSpeed],
   );
 
   const loopProceed = useCallback(
@@ -76,10 +79,9 @@ const MusicPlayer = () => {
         return;
       }
 
-      playHistory.current.push(index ?? 0);
-
       switch (loopMode) {
         case LoopMode.list_repeat:
+        case LoopMode.play_once:
           if (isNext) {
             playIndex(((index ?? 0) + 1) % playerState?.files.length);
           } else {
@@ -91,6 +93,7 @@ const MusicPlayer = () => {
           break;
         case LoopMode.shuffle:
           if (isNext) {
+            playHistory.current.push(index ?? 0);
             const nextIndex = Math.floor(Math.random() * playerState?.files.length);
             playIndex(nextIndex);
           } else {
@@ -103,9 +106,30 @@ const MusicPlayer = () => {
     [loopMode, playIndex, playerState, index],
   );
 
+  const manualNavigate = useCallback(
+    (isNext: boolean) => {
+      if (!playerState) {
+        return;
+      }
+
+      if (loopMode === LoopMode.single_repeat) {
+        if (isNext) {
+          playIndex(((index ?? 0) + 1) % playerState?.files.length);
+        } else {
+          playIndex(((index ?? 0) - 1 + playerState?.files.length) % playerState?.files.length);
+        }
+      } else {
+        loopProceed(isNext);
+      }
+    },
+    [loopMode, playIndex, playerState, index, loopProceed],
+  );
+
   const onPlayEnded = useCallback(() => {
-    loopProceed(true);
-  }, []);
+    if (loopMode !== LoopMode.play_once) {
+      loopProceed(true);
+    }
+  }, [loopMode, loopProceed]);
 
   const timeUpdate = useCallback(() => {
     setCurrent(Math.floor(audio.current?.currentTime || 0));
@@ -150,17 +174,23 @@ const MusicPlayer = () => {
   }, []);
 
   const toggleLoopMode = useCallback(() => {
-    setLoopMode((loopMode) => (loopMode + 1) % 3);
+    setLoopMode((loopMode) => (loopMode + 1) % 4);
+  }, []);
+
+  const setLoopModeHandler = useCallback((mode: number) => {
+    setLoopMode(mode);
+  }, []);
+
+  const setPlaybackSpeedHandler = useCallback((speed: number) => {
+    setPlaybackSpeed(speed);
+    if (audio.current) {
+      audio.current.playbackRate = speed;
+    }
   }, []);
 
   return (
     <>
-      <audio
-        ref={audio}
-        onPause={() => setPlaying(false)}
-        onPlay={() => setPlaying(true)}
-        onEnded={() => loopProceed(true)}
-      />
+      <audio ref={audio} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onEnded={onPlayEnded} />
       <Tooltip title={playingTooltip} enterDelay={0}>
         <IconButton ref={icon} onClick={onPlayerPopoverOpen} size="large">
           {playing ? <MusicNote2Play /> : <MusicNote2 />}
@@ -170,6 +200,7 @@ const MusicPlayer = () => {
         <PlayerPopup
           playIndex={playIndex}
           loopProceed={loopProceed}
+          manualNavigate={manualNavigate}
           file={playerState?.files[index]}
           duration={duration}
           current={current}
@@ -182,6 +213,9 @@ const MusicPlayer = () => {
           playlist={playerState?.files}
           loopMode={loopMode}
           toggleLoopMode={toggleLoopMode}
+          setLoopMode={setLoopModeHandler}
+          playbackSpeed={playbackSpeed}
+          setPlaybackSpeed={setPlaybackSpeedHandler}
           anchorEl={icon.current}
           onClose={onPlayerPopoverClose}
         />

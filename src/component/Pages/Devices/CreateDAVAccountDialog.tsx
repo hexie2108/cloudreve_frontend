@@ -1,32 +1,22 @@
-import { useTranslation } from "react-i18next";
-import {
-  Checkbox,
-  DialogContent,
-  DialogProps,
-  FormGroup,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { useAppDispatch } from "../../../redux/hooks.ts";
-import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
+import { Checkbox, DialogContent, DialogProps, FormGroup, Stack, Typography, useTheme } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useMemo, useState } from "react";
-import { PathSelectorForm } from "../../Common/Form/PathSelectorForm.tsx";
-import { defaultPath } from "../../../hooks/useNavigation.tsx";
-import { Filesystem } from "../../../util/uri.ts";
-import { OutlineIconTextField } from "../../Common/Form/OutlineIconTextField.tsx";
-import Tag from "../../Icons/Tag.tsx";
-import DialogAccordion from "../../Dialogs/DialogAccordion.tsx";
-import Boolset from "../../../util/boolset.ts";
-import { GroupPermission } from "../../../api/user.ts";
-import SessionManager from "../../../session";
-import { SmallFormControlLabel } from "../../Common/StyledComponents.tsx";
-import {
-  sendCreateDavAccounts,
-  sendUpdateDavAccounts,
-} from "../../../api/api.ts";
+import { Trans, useTranslation } from "react-i18next";
+import { sendCreateDavAccounts, sendUpdateDavAccounts } from "../../../api/api.ts";
 import { DavAccount, DavAccountOption } from "../../../api/setting.ts";
+import { GroupPermission } from "../../../api/user.ts";
+import { defaultPath } from "../../../hooks/useNavigation.tsx";
+import { useAppDispatch } from "../../../redux/hooks.ts";
+import SessionManager from "../../../session";
+import Boolset from "../../../util/boolset.ts";
+import { Filesystem } from "../../../util/uri.ts";
+import { Code } from "../../Common/Code.tsx";
+import { OutlineIconTextField } from "../../Common/Form/OutlineIconTextField.tsx";
+import { PathSelectorForm } from "../../Common/Form/PathSelectorForm.tsx";
+import { SmallFormControlLabel } from "../../Common/StyledComponents.tsx";
+import DialogAccordion from "../../Dialogs/DialogAccordion.tsx";
+import DraggableDialog from "../../Dialogs/DraggableDialog.tsx";
+import Tag from "../../Icons/Tag.tsx";
 
 export interface CreateDAVAccountDialogProps extends DialogProps {
   onAccountAdded?: (account: DavAccount) => void;
@@ -50,14 +40,13 @@ const CreateDAVAccountDialog = ({
   const [name, setName] = useState("");
   const [path, setPath] = useState(defaultPath);
   const [readonly, setReadonly] = useState(false);
+  const [blockSysFilesUpload, setBlockSysFilesUpload] = useState(false);
   const [proxy, setProxy] = useState(false);
 
   const theme = useTheme();
 
   const groupProxyEnabled = useMemo(() => {
-    const perm = new Boolset(
-      SessionManager.currentLoginOrNull()?.user.group?.permission,
-    );
+    const perm = new Boolset(SessionManager.currentLoginOrNull()?.user.group?.permission);
     return perm.enabled(GroupPermission.webdav_proxy);
   }, []);
 
@@ -67,6 +56,7 @@ const CreateDAVAccountDialog = ({
       setPath(editTarget.uri);
       const options = new Boolset(editTarget.options);
       setReadonly(options.enabled(DavAccountOption.readonly));
+      setBlockSysFilesUpload(options.enabled(DavAccountOption.disable_sys_files));
       setProxy(options.enabled(DavAccountOption.proxy));
     }
   }, [open]);
@@ -82,12 +72,9 @@ const CreateDAVAccountDialog = ({
       uri: path,
       proxy,
       readonly,
+      disable_sys_files: blockSysFilesUpload,
     };
-    dispatch(
-      editTarget
-        ? sendUpdateDavAccounts(editTarget.id, req)
-        : sendCreateDavAccounts(req),
-    )
+    dispatch(editTarget ? sendUpdateDavAccounts(editTarget.id, req) : sendCreateDavAccounts(req))
       .then((account) => {
         onClose && onClose({}, "escapeKeyDown");
         !editTarget && onAccountAdded && onAccountAdded(account);
@@ -146,39 +133,36 @@ const CreateDAVAccountDialog = ({
           >
             <FormGroup>
               <SmallFormControlLabel
+                control={<Checkbox size="small" onChange={(e) => setReadonly(e.target.checked)} checked={readonly} />}
+                label={t("application:setting.readonlyOn")}
+              />
+              <Typography sx={{ pl: "27px" }} variant={"caption"} color={"text.secondary"}>
+                {t("application:setting.readonlyTooltip")}
+              </Typography>
+              <SmallFormControlLabel
                 control={
                   <Checkbox
                     size="small"
-                    onChange={(e) => setReadonly(e.target.checked)}
-                    checked={readonly}
+                    onChange={(e) => setBlockSysFilesUpload(e.target.checked)}
+                    checked={blockSysFilesUpload}
                   />
                 }
-                label={t("application:setting.readonlyOn")}
+                label={t("application:setting.blockSysFilesUpload")}
               />
-              <Typography
-                sx={{ pl: "27px" }}
-                variant={"caption"}
-                color={"text.secondary"}
-              >
-                {t("application:setting.readonlyTooltip")}
+              <Typography sx={{ pl: "27px" }} variant={"caption"} color={"text.secondary"}>
+                <Trans
+                  i18nKey="application:setting.blockSysFilesUploadTooltip"
+                  ns="application"
+                  components={[<Code />]}
+                />
               </Typography>
               {groupProxyEnabled && (
                 <>
                   <SmallFormControlLabel
-                    control={
-                      <Checkbox
-                        size="small"
-                        onChange={(e) => setProxy(e.target.checked)}
-                        checked={proxy}
-                      />
-                    }
+                    control={<Checkbox size="small" onChange={(e) => setProxy(e.target.checked)} checked={proxy} />}
                     label={t("application:setting.proxy")}
                   />
-                  <Typography
-                    sx={{ pl: "27px" }}
-                    variant={"caption"}
-                    color={"text.secondary"}
-                  >
+                  <Typography sx={{ pl: "27px" }} variant={"caption"} color={"text.secondary"}>
                     {t("application:setting.proxyTooltip")}
                   </Typography>
                 </>

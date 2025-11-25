@@ -1,11 +1,16 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, Button, ButtonGroup, ListItemText, Menu, useTheme } from "@mui/material";
-import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { closeMarkdownViewer } from "../../../redux/globalStateSlice.ts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks.ts";
 import { getEntityContent } from "../../../redux/thunks/file.ts";
-import { saveMarkdown } from "../../../redux/thunks/viewer.ts";
+import {
+  markdownImageAutocompleteSuggestions,
+  markdownImagePreviewHandler,
+  saveMarkdown,
+  uploadMarkdownImage,
+} from "../../../redux/thunks/viewer.ts";
 import { SquareMenuItem } from "../../FileManager/ContextMenu/ContextMenu.tsx";
 import useActionDisplayOpt, { canUpdate } from "../../FileManager/ContextMenu/useActionDisplayOpt.ts";
 import CaretDown from "../../Icons/CaretDown.tsx";
@@ -58,6 +63,13 @@ const MarkdownViewer = () => {
     loadContent();
   }, [viewerState?.open]);
 
+  const imageAutocompleteSuggestions = useMemo(() => {
+    if (!viewerState?.open) {
+      return null;
+    }
+    return dispatch(markdownImageAutocompleteSuggestions());
+  }, [viewerState?.open]);
+
   const onClose = useCallback(() => {
     dispatch(closeMarkdownViewer());
   }, [dispatch]);
@@ -105,6 +117,20 @@ const MarkdownViewer = () => {
       }
     };
   }, [saved, supportUpdate, onSave]);
+
+  const imagePreviewHandler = useCallback(
+    (imageSource: string) => {
+      return dispatch(markdownImagePreviewHandler(imageSource, viewerState?.file?.path ?? ""));
+    },
+    [dispatch, viewerState?.file?.path],
+  );
+
+  const onImageUpload = useCallback(
+    async (file: File): Promise<string> => {
+      return dispatch(uploadMarkdownImage(file));
+    },
+    [dispatch],
+  );
 
   return (
     <ViewerDialog
@@ -159,6 +185,9 @@ const MarkdownViewer = () => {
             initialValue={value}
             onChange={(v) => onChange(v as string)}
             onSaveShortcut={onSaveShortcut}
+            imagePreviewHandler={imagePreviewHandler}
+            imageAutocompleteSuggestions={imageAutocompleteSuggestions}
+            imageUploadHandler={onImageUpload}
           />
         </Suspense>
       )}

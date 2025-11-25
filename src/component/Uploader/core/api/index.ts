@@ -1,11 +1,14 @@
+import { CancelToken } from "axios";
 import {
-  OneDriveChunkResponse,
-  QiniuChunkResponse,
-  QiniuFinishUploadRequest,
-  QiniuPartsInfo,
-  S3Part,
-} from "../types";
-import { OBJtoXML, request } from "../utils";
+  sendCreateUploadSession,
+  sendDeleteUploadSession,
+  sendOneDriveCompleteUpload,
+  sendS3LikeCompleteUpload,
+  sendUploadChunk,
+} from "../../../../api/api.ts";
+import { UploadCredential, UploadSessionRequest } from "../../../../api/explorer.ts";
+import { AppError } from "../../../../api/request.ts";
+import { store } from "../../../../redux/store.ts";
 import {
   CreateUploadSessionError,
   DeleteUploadSessionError,
@@ -22,27 +25,13 @@ import {
   SlaveChunkUploadError,
   UpyunUploadError,
 } from "../errors";
-import { ChunkInfo, ChunkProgress } from "../uploader/chunk";
+import { OneDriveChunkResponse, QiniuChunkResponse, QiniuFinishUploadRequest, QiniuPartsInfo, S3Part } from "../types";
 import { Progress } from "../uploader/base";
-import { CancelToken } from "axios";
-import {
-  UploadCredential,
-  UploadSessionRequest,
-} from "../../../../api/explorer.ts";
-import { store } from "../../../../redux/store.ts";
-import {
-  sendCreateUploadSession,
-  sendDeleteUploadSession,
-  sendOneDriveCompleteUpload,
-  sendS3LikeCompleteUpload,
-  sendUploadChunk,
-} from "../../../../api/api.ts";
-import { AppError } from "../../../../api/request.ts";
+import { ChunkInfo, ChunkProgress } from "../uploader/chunk";
+import { EncryptedBlob } from "../uploader/encrypt/blob.ts";
+import { OBJtoXML, request } from "../utils";
 
-export async function createUploadSession(
-  req: UploadSessionRequest,
-  _cancel: CancelToken,
-): Promise<UploadCredential> {
+export async function createUploadSession(req: UploadSessionRequest, _cancel: CancelToken): Promise<UploadCredential> {
   try {
     return await store.dispatch(sendCreateUploadSession(req));
   } catch (e) {
@@ -54,10 +43,7 @@ export async function createUploadSession(
   }
 }
 
-export async function deleteUploadSession(
-  id: string,
-  uri: string,
-): Promise<any> {
+export async function deleteUploadSession(id: string, uri: string): Promise<any> {
   try {
     return await store.dispatch(sendDeleteUploadSession({ id, uri }));
   } catch (e) {
@@ -77,18 +63,12 @@ export async function localUploadChunk(
 ): Promise<any> {
   try {
     return await store.dispatch(
-      sendUploadChunk(
-        sessionID,
-        chunk.chunk,
-        chunk.index,
-        cancel,
-        (progressEvent) => {
-          onProgress({
-            loaded: progressEvent.loaded,
-            total: progressEvent.total,
-          });
-        },
-      ),
+      sendUploadChunk(sessionID, chunk.chunk, chunk.index, cancel, (progressEvent) => {
+        onProgress({
+          loaded: progressEvent.loaded,
+          total: progressEvent.total,
+        });
+      }),
     );
   } catch (e) {
     if (e instanceof AppError) {
@@ -106,13 +86,16 @@ export async function slaveUploadChunk(
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
 ): Promise<any> {
+  const streaming = chunk.chunk instanceof EncryptedBlob;
   const res = await request<any>(`${url}?chunk=${chunk.index}`, {
     method: "post",
+    adapter: streaming ? "fetch" : "xhr",
     headers: {
       "content-type": "application/octet-stream",
       Authorization: credential,
+      ...(streaming && { "X-Expected-Entity-Length": chunk.chunk.size?.toString() ?? "0" }),
     },
-    data: chunk.chunk,
+    data: streaming ? chunk.chunk.stream() : chunk.chunk,
     onUploadProgress: (progressEvent) => {
       onProgress({
         loaded: progressEvent.loaded,
@@ -136,13 +119,16 @@ export async function oneDriveUploadChunk(
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
 ): Promise<OneDriveChunkResponse> {
+  const streaming = chunk.chunk instanceof EncryptedBlob;
   const res = await request<OneDriveChunkResponse>(url, {
     method: range === "" ? "get" : "put",
+    adapter: streaming ? "fetch" : "xhr",
     headers: {
       "content-type": "application/octet-stream",
+      ...(streaming && { "Content-Length": chunk.chunk.size?.toString() ?? "0" }),
       ...(range !== "" && { "content-range": range }),
     },
-    data: chunk.chunk,
+    data: streaming ? chunk.chunk.stream() : chunk.chunk,
     onUploadProgress: (progressEvent) => {
       onProgress({
         loaded: progressEvent.loaded,
@@ -161,14 +147,9 @@ export async function oneDriveUploadChunk(
   return res.data;
 }
 
-export async function finishOneDriveUpload(
-  sessionID: string,
-  sessionKey: string,
-): Promise<any> {
+export async function finishOneDriveUpload(sessionID: string, sessionKey: string): Promise<any> {
   try {
-    return await store.dispatch(
-      sendOneDriveCompleteUpload(sessionID, sessionKey),
-    );
+    return await store.dispatch(sendOneDriveCompleteUpload(sessionID, sessionKey));
   } catch (e) {
     if (e instanceof AppError) {
       throw new OneDriveFinishUploadError(e.response);
@@ -184,12 +165,14 @@ export async function s3LikeUploadChunk(
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
 ): Promise<string> {
+  const streaming = chunk.chunk instanceof EncryptedBlob;
   const res = await request<string>(url, {
     method: "put",
+    adapter: streaming ? "fetch" : "xhr",
     headers: {
       "content-type": "application/octet-stream",
     },
-    data: chunk.chunk,
+    data: streaming ? chunk.chunk.stream() : chunk.chunk,
     onUploadProgress: (progressEvent) => {
       onProgress({
         loaded: progressEvent.loaded,
@@ -210,11 +193,7 @@ export async function s3LikeUploadChunk(
   return res.headers["etag"];
 }
 
-export async function obsFinishUpload(
-  url: string,
-  chunks: ChunkProgress[],
-  cancel: CancelToken,
-): Promise<any> {
+export async function obsFinishUpload(url: string, chunks: ChunkProgress[], cancel: CancelToken): Promise<any> {
   let body = encodePartsXML(chunks);
   const res = await request<any>(url, {
     method: "post",
@@ -288,13 +267,15 @@ export async function qiniuDriveUploadChunk(
   onProgress: (p: Progress) => void,
   cancel: CancelToken,
 ): Promise<QiniuChunkResponse> {
+  const streaming = chunk.chunk instanceof EncryptedBlob;
   const res = await request<QiniuChunkResponse>(`${url}/${chunk.index + 1}`, {
     method: "put",
+    adapter: streaming ? "fetch" : "xhr",
     headers: {
       "content-type": "application/octet-stream",
       authorization: "UpToken " + upToken,
     },
-    data: chunk.chunk,
+    data: streaming ? chunk.chunk.stream() : chunk.chunk,
     onUploadProgress: (progressEvent) => {
       onProgress({
         loaded: progressEvent.loaded,
@@ -351,7 +332,7 @@ export async function qiniuFinishUpload(
 
 export async function upyunFormUploadChunk(
   url: string,
-  file: File,
+  file: Blob,
   policy: string,
   credential: string,
   onProgress: (p: Progress) => void,
@@ -391,15 +372,9 @@ export async function upyunFormUploadChunk(
   return res.data;
 }
 
-export async function s3LikeUploadCallback(
-  sessionID: string,
-  sessionKey: string,
-  policyType: string,
-): Promise<any> {
+export async function s3LikeUploadCallback(sessionID: string, sessionKey: string, policyType: string): Promise<any> {
   try {
-    return await store.dispatch(
-      sendS3LikeCompleteUpload(policyType, sessionID, sessionKey),
-    );
+    return await store.dispatch(sendS3LikeCompleteUpload(policyType, sessionID, sessionKey));
   } catch (e) {
     if (e instanceof AppError) {
       throw new S3LikeUploadCallbackError(e.response);

@@ -1,15 +1,16 @@
 // 所有 Uploader 的基类
-import { Task } from "../types";
+import axios, { CanceledError, CancelTokenSource } from "axios";
+import { EncryptionCipher, PolicyType } from "../../../../api/explorer.ts";
+import CrUri from "../../../../util/uri.ts";
+import { createUploadSession, deleteUploadSession } from "../api";
+import { UploaderError } from "../errors";
 import UploadManager from "../index";
 import Logger from "../logger";
-import { validate } from "../utils/validator";
-import { CancelToken } from "../utils/request";
-import axios, { CanceledError, CancelTokenSource } from "axios";
-import { createUploadSession, deleteUploadSession } from "../api";
+import { Task } from "../types";
 import * as utils from "../utils";
-import { UploaderError } from "../errors";
-import { PolicyType } from "../../../../api/explorer.ts";
-import CrUri from "../../../../util/uri.ts";
+import { CancelToken } from "../utils/request";
+import { validate } from "../utils/validator";
+import { EncryptedBlob } from "./encrypt/blob.ts";
 
 export enum Status {
   added,
@@ -30,14 +31,7 @@ export interface UploadHandlers {
   onProgress: (data: UploadProgress) => void;
   onMsg: (msg: string, color: MessageColor) => void;
 }
-export type MessageColor =
-  | "error"
-  | "default"
-  | "success"
-  | "warning"
-  | "info"
-  | "loading"
-  | undefined;
+export type MessageColor = "error" | "default" | "success" | "warning" | "info" | "loading" | undefined;
 
 export interface UploadProgress {
   total: ProgressCompose;
@@ -68,8 +62,16 @@ const resumePolicy = [
   PolicyType.oss,
   PolicyType.onedrive,
   PolicyType.s3,
+  PolicyType.ks3,
 ];
 const deleteUploadSessionDelay = 500;
+
+export const uploadPromisePool: {
+  [key: string]: {
+    resolve: (value: Task | PromiseLike<Task>) => void;
+    reject: (reason?: any) => void;
+  };
+} = {};
 
 export default abstract class Base {
   public child?: Base[];
@@ -87,6 +89,7 @@ export default abstract class Base {
 
   public lastTime = Date.now();
   public startTime = Date.now();
+  public promiseId: string | undefined;
 
   constructor(
     public task: Task,
@@ -144,6 +147,8 @@ export default abstract class Base {
           last_modified: this.task.file.lastModified,
           mime_type: this.task.file.type,
           entity_type: this.task.overwrite ? "version" : undefined,
+          encryption_supported:
+            this.task.policy.encryption && "crypto" in window ? [EncryptionCipher.aes256ctr] : undefined,
         },
         this.cancelToken.token,
       );
@@ -153,6 +158,20 @@ export default abstract class Base {
       this.task.resumed = true;
       this.task.chunkProgress = cachedInfo.chunkProgress;
       this.logger.info("Resume upload from cached ctx:", cachedInfo);
+    }
+
+    if (this.task.session?.encrypt_metadata && !this.task.policy?.relay) {
+      // Check browser support for encryption
+      if (!("crypto" in window)) {
+        this.logger.error("Encryption is not supported in this browser");
+        this.setError(new Error("Web Crypto API is not supported in this browser"));
+        return;
+      }
+
+      const encryptedBlob = new EncryptedBlob(this.task.file, this.task.session?.encrypt_metadata);
+      this.task.blob = encryptedBlob;
+    } else {
+      this.task.blob = this.task.file;
     }
 
     this.transit(Status.processing);
@@ -204,10 +223,7 @@ export default abstract class Base {
       return;
     }
 
-    if (
-      !(e instanceof UploaderError && e.Retryable()) ||
-      !resumePolicy.includes(this.task.policy.type)
-    ) {
+    if (!(e instanceof UploaderError && e.Retryable()) || !resumePolicy.includes(this.task.policy.type)) {
       this.logger.warn("Non-resume error occurs, clean resume ctx cache");
       this.cancelUploadSession();
     }
@@ -222,10 +238,7 @@ export default abstract class Base {
       utils.removeResumeCtx(this.task, this.logger);
       if (this.task.session) {
         setTimeout(() => {
-          deleteUploadSession(
-            this.task.session!?.session_id,
-            this.task.session!?.uri,
-          )
+          deleteUploadSession(this.task.session!?.session_id, this.task.session!?.uri)
             .catch((e) => {
               this.logger.warn("Failed to cancel upload session: ", e);
             })
@@ -241,14 +254,25 @@ export default abstract class Base {
 
   protected transit(status: Status) {
     this.status = status;
+    if (this.promiseId && status === Status.finished) {
+      const promise = uploadPromisePool[this.promiseId];
+      delete uploadPromisePool[this.promiseId];
+      this.promiseId = undefined;
+      if (promise) {
+        switch (status) {
+          case Status.finished:
+            promise.resolve(this.task);
+            break;
+          default:
+            promise.reject(this.error);
+            break;
+        }
+      }
+    }
     this.subscriber.onTransition(status);
   }
 
-  public getProgressInfoItem(
-    loaded: number,
-    size: number,
-    fromCache?: boolean,
-  ): ProgressCompose {
+  public getProgressInfoItem(loaded: number, size: number, fromCache?: boolean): ProgressCompose {
     return {
       size,
       loaded,

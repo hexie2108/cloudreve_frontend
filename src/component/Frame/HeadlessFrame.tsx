@@ -1,9 +1,11 @@
 import { Box, Container, Grid, Paper } from "@mui/material";
+import { Outlet, useNavigation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks.ts";
+import AutoHeight from "../Common/AutoHeight.tsx";
 import CircularProgress from "../Common/CircularProgress.tsx";
 import Logo from "../Common/Logo.tsx";
-import AutoHeight from "../Common/AutoHeight.tsx";
-import { Outlet, useNavigation } from "react-router-dom";
+import LanguageSwitcher from "../Common/LanguageSwitcher.tsx";
+import PoweredBy from "./PoweredBy.tsx";
 
 const Loading = () => {
   return (
@@ -21,8 +23,9 @@ const Loading = () => {
 };
 
 const HeadlessFrame = () => {
-  const loading = useAppSelector(
-    (state) => state.globalState.loading.headlessFrame,
+  const loading = useAppSelector((state) => state.globalState.loading.headlessFrame);
+  const { headless_footer, headless_bottom, sidebar_bottom } = useAppSelector(
+    (state) => state.siteConfig.basic?.config?.custom_html ?? {},
   );
   const dispatch = useAppDispatch();
   let navigation = useNavigation();
@@ -31,9 +34,7 @@ const HeadlessFrame = () => {
     <Box
       sx={{
         backgroundColor: (theme) =>
-          theme.palette.mode === "light"
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900],
+          theme.palette.mode === "light" ? theme.palette.grey[100] : theme.palette.grey[900],
         flexGrow: 1,
         height: "100vh",
         overflow: "auto",
@@ -51,34 +52,51 @@ const HeadlessFrame = () => {
           <Box sx={{ width: "100%", py: 2 }}>
             <Paper
               sx={{
-                padding: (theme) =>
-                  `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(3)}`,
+                padding: (theme) => `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(3)}`,
               }}
             >
-              <Logo
+              <Box
                 sx={{
-                  maxWidth: "40%",
-                  maxHeight: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   mb: 2,
                 }}
-              />
+              >
+                <Logo
+                  sx={{
+                    maxWidth: "40%",
+                    maxHeight: "40px",
+                  }}
+                />
+                {/* 语言切换按钮 */}
+                <LanguageSwitcher />
+              </Box>
               <AutoHeight>
                 <div>
                   <Box
                     sx={{
-                      display:
-                        loading || navigation.state !== "idle"
-                          ? "none"
-                          : "block",
+                      display: loading || navigation.state !== "idle" ? "none" : "block",
                     }}
                   >
                     <Outlet />
+                    {headless_bottom && (
+                      <Box sx={{ width: "100%" }}>
+                        <div dangerouslySetInnerHTML={{ __html: headless_bottom }} />
+                      </Box>
+                    )}
                   </Box>
                   {(loading || navigation.state !== "idle") && <Loading />}
                 </div>
               </AutoHeight>
             </Paper>
           </Box>
+          <PoweredBy />
+          {headless_footer && (
+            <Box sx={{ width: "100%", mb: 2 }}>
+              <div dangerouslySetInnerHTML={{ __html: headless_footer }} />
+            </Box>
+          )}
         </Grid>
       </Container>
     </Box>

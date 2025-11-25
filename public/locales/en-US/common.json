@@ -2,7 +2,8 @@
   "pageNotFound": "Page not found",
   "unknownError": "Unknown error",
   "errLoadingSiteConfig": "Unable to load site configuration: ",
-  "newVersionRefresh": "A new version of the current page is available and ready to be refreshed.",
+  "newVersionRefresh": "A new version of the current page is available.",
+  "update": "Update",
   "errorDetails": "Details",
   "renderError": "There is an error in the page rendering, please try refreshing this page.",
   "ok": "OK",
@@ -28,6 +29,13 @@
   "rowsPerPage": "Rows per page",
   "custom": "Custom",
   "enter": "Enter",
+  "captcha": {
+    "cap": {
+      "human": "I'm a human",
+      "verifying": "Verifying...",
+      "verified": "You're a human"
+    }
+  },
   "errors": {
     "401": "Please login.",
     "403": "You are not allowed to perform this action.",
@@ -72,7 +80,7 @@
     "40049": "File size exceed limit.",
     "40050": "File type not allowed.",
     "40051": "Insufficient storage quota.",
-    "40052": "Invalid object name, please remove special characters.",
+    "40052": "This file name or extension is not allowed.",
     "40053": "Cannot perform such action on root folder",
     "40054": "File with the same name is already being uploaded under this folder, please cleanup upload sessions.",
     "40055": "File metadata mismatch.",

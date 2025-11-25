@@ -51,6 +51,14 @@ export interface ExtendedInfo {
   shares?: Share[];
   entities?: Entity[];
   view?: ExplorerView;
+  direct_links?: DirectLink[];
+}
+
+export interface DirectLink {
+  id: string;
+  created_at: string;
+  url: string;
+  downloaded: number;
 }
 
 export interface Entity {
@@ -60,6 +68,7 @@ export interface Entity {
   storage_policy?: StoragePolicy;
   size: number;
   created_by?: User;
+  encrypted_with?: EncryptionCipher;
 }
 
 export interface Share {
@@ -75,10 +84,12 @@ export interface Share {
   downloaded: number;
   expired?: boolean;
   unlocked: boolean;
+  password_protected: boolean;
   source_type?: number;
   owner: User;
   source_uri?: string;
   password?: string;
+  show_readme?: boolean;
 }
 
 export enum PolicyType {
@@ -90,16 +101,24 @@ export enum PolicyType {
   cos = "cos",
   upyun = "upyun",
   s3 = "s3",
+  ks3 = "ks3",
   obs = "obs",
+  load_balance = "load_balance",
 }
 
 export interface StoragePolicy {
   id: string;
   name: string;
   allowed_suffix?: string[];
+  denied_suffix?: string[];
+  allowed_name_regexp?: string;
+  denied_name_regexp?: string;
   max_size: number;
   type: PolicyType;
   relay?: boolean;
+  chunk_concurrency?: number;
+  encryption?: boolean;
+  streaming_encryption?: boolean;
 }
 
 export interface PaginationResults {
@@ -146,6 +165,7 @@ export const Metadata = {
   upload_session_id: "sys:upload_session_id",
   icon_color: "customize:icon_color",
   emoji: "customize:emoji",
+  live_photo: "customize:live_photo",
   tag_prefix: "tag:",
   thumbDisabled: "thumb:disabled",
   restore_uri: "sys:restore_uri",
@@ -194,6 +214,14 @@ export const Metadata = {
   stream_indexed_bitrate: "bitrate",
   stream_indexed_width: "width",
   stream_indexed_height: "height",
+
+  // Geocoding
+  street: "geocoding:street",
+  locality: "geocoding:locality",
+  place: "geocoding:place",
+  district: "geocoding:district",
+  region: "geocoding:region",
+  country: "geocoding:country",
 };
 
 export interface FileThumbResponse {
@@ -278,6 +306,7 @@ export interface ShareCreateService {
   password?: string;
   expire?: number;
   share_view?: boolean;
+  show_readme?: boolean;
 }
 
 export interface CreateFileService {
@@ -385,6 +414,8 @@ export const AuditLogType = {
   redeem_gift_code: 54,
   file_imported: 55,
   update_view: 56,
+  delete_direct_link: 57,
+  report_abuse: 58,
 };
 
 export interface MultipleUriService {
@@ -401,6 +432,12 @@ export const ViewerType = {
   wopi: "wopi",
   custom: "custom",
 };
+
+export enum ViewerPlatform {
+  pc = "pc",
+  mobile = "mobile",
+  all = "all",
+}
 
 export interface Viewer {
   id: string;
@@ -420,6 +457,8 @@ export interface Viewer {
     };
   };
   templates?: NewFileTemplate[];
+  platform?: ViewerPlatform;
+  required_group_permission?: number[];
 }
 
 export interface NewFileTemplate {
@@ -454,6 +493,10 @@ export interface CreateViewerSessionService {
   version?: string;
 }
 
+export enum EncryptionCipher {
+  aes256ctr = "aes-256-ctr",
+}
+
 export interface UploadSessionRequest {
   uri: string;
   size: number;
@@ -464,6 +507,13 @@ export interface UploadSessionRequest {
     [key: string]: string;
   };
   mime_type?: string;
+  encryption_supported?: EncryptionCipher[];
+}
+
+export interface EncryptMetadata {
+  algorithm: EncryptionCipher;
+  key_plain_text: string;
+  iv: string;
 }
 
 export interface UploadCredential {
@@ -483,6 +533,7 @@ export interface UploadCredential {
   callback_secret: string;
   mime_type?: string;
   upload_policy?: string;
+  encrypt_metadata?: EncryptMetadata;
 }
 
 export interface DeleteUploadSessionService {
@@ -498,4 +549,43 @@ export interface DirectLink {
 export interface PatchViewSyncService {
   uri: string;
   view?: ExplorerView;
+}
+
+export interface CustomProps {
+  id: string;
+  name: string;
+  type: CustomPropsType;
+  max?: number;
+  min?: number;
+  default?: string;
+  options?: string[];
+  icon?: string;
+}
+
+export enum CustomPropsType {
+  text = "text",
+  number = "number",
+  boolean = "boolean",
+  select = "select",
+  multi_select = "multi_select",
+  user = "user",
+  link = "link",
+  rating = "rating",
+}
+
+export interface ArchivedFile {
+  name: string;
+  size: number;
+  updated_at?: string;
+  is_directory: boolean;
+}
+
+export interface ArchiveListFilesResponse {
+  files: ArchivedFile[];
+}
+
+export interface ArchiveListFilesService {
+  uri: string;
+  entity?: string;
+  text_encoding?: string;
 }

@@ -8,7 +8,6 @@ import ResponsiveTabs, { Tab } from "../../Common/ResponsiveTabs.tsx";
 import Bot from "../../Icons/Bot.tsx";
 import Color from "../../Icons/Color.tsx";
 import CubeSync from "../../Icons/CubeSync.tsx";
-import CubeTree from "../../Icons/CubeTree.tsx";
 import Currency from "../../Icons/Currency.tsx";
 import FilmstripImage from "../../Icons/FilmstripImage.tsx";
 import Globe from "../../Icons/Globe.tsx";
@@ -22,7 +21,6 @@ import Appearance from "./Appearance/Appearance.tsx";
 import Captcha from "./Captcha/Captcha.tsx";
 import Email from "./Email/Email.tsx";
 import Events from "./Event/Events.tsx";
-import Filesystem from "./Filesystem/Filesystem.tsx";
 import Media from "./Media/Media.tsx";
 import Queue from "./Queue/Queue.tsx";
 import ServerSetting from "./Server/ServerSetting.tsx";
@@ -103,11 +101,6 @@ const Settings = () => {
           label: t("nav.captcha"),
           value: SettingsPageTab.Captcha,
           icon: <Bot />,
-        },
-        {
-          label: t("nav.fileSystem"),
-          value: SettingsPageTab.FileSystem,
-          icon: <CubeTree />,
         },
         {
           label: t("nav.mediaProcessing"),
@@ -221,46 +214,13 @@ const Settings = () => {
                     "captcha_ReCaptchaSecret",
                     "captcha_turnstile_site_key",
                     "captcha_turnstile_site_secret",
+                    "captcha_cap_instance_url",
+                    "captcha_cap_site_key",
+                    "captcha_cap_secret_key",
+                    "captcha_cap_asset_server",
                   ]}
                 >
                   <Captcha />
-                </SettingsWrapper>
-              )}
-              {tab === SettingsPageTab.FileSystem && (
-                <SettingsWrapper
-                  settings={[
-                    "maxEditSize",
-                    "cron_trash_bin_collect",
-                    "cron_entity_collect",
-                    "public_resource_maxage",
-                    "use_cursor_pagination",
-                    "max_page_size",
-                    "max_recursive_searched_folder",
-                    "max_batched_file",
-                    "map_provider",
-                    "map_google_tile_type",
-                    "mime_mapping",
-                    "explorer_icons",
-                    "file_viewers",
-                    "explorer_category_image_query",
-                    "explorer_category_video_query",
-                    "explorer_category_audio_query",
-                    "explorer_category_document_query",
-                    "emojis",
-                    "archive_timeout",
-                    "upload_session_timeout",
-                    "slave_api_timeout",
-                    "folder_props_timeout",
-                    "chunk_retries",
-                    "use_temp_chunk_buffer",
-                    "max_parallel_transfer",
-                    "cron_oauth_cred_refresh",
-                    "viewer_session_timeout",
-                    "entity_url_default_ttl",
-                    "entity_url_cache_margin",
-                  ]}
-                >
-                  <Filesystem />
                 </SettingsWrapper>
               )}
               {tab === SettingsPageTab.MediaProcessing && (
@@ -283,6 +243,7 @@ const Settings = () => {
                     "thumb_ffmpeg_max_size",
                     "thumb_ffmpeg_exts",
                     "thumb_ffmpeg_seek",
+                    "thumb_ffmpeg_extra_args",
                     "thumb_libreoffice_path",
                     "thumb_libreoffice_max_size",
                     "thumb_libreoffice_enabled",
@@ -290,6 +251,10 @@ const Settings = () => {
                     "thumb_music_cover_enabled",
                     "thumb_music_cover_exts",
                     "thumb_music_cover_max_size",
+                    "thumb_libraw_path",
+                    "thumb_libraw_max_size",
+                    "thumb_libraw_enabled",
+                    "thumb_libraw_exts",
                     "media_meta_exif",
                     "media_meta_exif_size_local",
                     "media_meta_exif_size_remote",
@@ -301,6 +266,8 @@ const Settings = () => {
                     "media_meta_ffprobe_path",
                     "media_meta_ffprobe_size_local",
                     "media_meta_ffprobe_size_remote",
+                    "media_meta_geocoding",
+                    "media_meta_geocoding_mapbox_ak",
                   ]}
                 >
                   <Media />
@@ -336,7 +303,16 @@ const Settings = () => {
                 </SettingsWrapper>
               )}
               {tab === SettingsPageTab.Appearance && (
-                <SettingsWrapper settings={["theme_options", "defaultTheme"]}>
+                <SettingsWrapper
+                  settings={[
+                    "theme_options",
+                    "defaultTheme",
+                    "custom_nav_items",
+                    "headless_footer_html",
+                    "headless_bottom_html",
+                    "sidebar_bottom_html",
+                  ]}
+                >
                   <Appearance />
                 </SettingsWrapper>
               )}

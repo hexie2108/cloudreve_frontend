@@ -1,6 +1,6 @@
 import { Button, Collapse, FormControl, Link, Stack } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { createStoragePolicyCors } from "../../../../../api/api";
 import { StoragePolicy } from "../../../../../api/dashboard";
@@ -9,11 +9,12 @@ import { useAppDispatch } from "../../../../../redux/hooks";
 import { DefaultCloseAction } from "../../../../Common/Snackbar/snackbar";
 import { DenseFilledTextField, SecondaryButton } from "../../../../Common/StyledComponents";
 import SettingForm from "../../../../Pages/Setting/SettingForm";
-import { Code } from "../../../Common/Code";
+import { Code } from "../../../../Common/Code.tsx";
 import { NoMarginHelperText } from "../../../Settings/Settings";
 import { AddWizardProps } from "../../AddWizardDialog";
 import BucketACLInput from "../../EditStoragePolicy/BucketACLInput";
 import BucketCorsTable from "../../EditStoragePolicy/BucketCorsTable";
+import { PolicyPropsMap } from "../../StoragePolicySetting";
 const OssWizard = ({ onSubmit }: AddWizardProps) => {
   const { t } = useTranslation("dashboard");
   const dispatch = useAppDispatch();
@@ -34,10 +35,15 @@ const OssWizard = ({ onSubmit }: AddWizardProps) => {
       media_meta_exts: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "heif"],
       media_meta_generator_proxy: true,
       thumb_generator_proxy: true,
+      chunk_concurrency: 3,
     },
     file_name_rule: "{uuid}_{originname}",
     edges: {},
   });
+
+  const policyProps = useMemo(() => {
+    return PolicyPropsMap[PolicyType.oss];
+  }, []);
 
   const hamdleCreateCors = () => {
     if (!formRef.current?.checkValidity()) {
@@ -110,6 +116,15 @@ const OssWizard = ({ onSubmit }: AddWizardProps) => {
             <Trans i18nKey="policy.ossEndpointDes" ns="dashboard" components={[<Code />, <Code />, <Code />]} />
             {t("policy.ossEndpointDesInternalHint")}
           </NoMarginHelperText>
+        </SettingForm>
+        <SettingForm title={t(policyProps.regionCode ?? "")} lgWidth={12}>
+          <DenseFilledTextField
+            fullWidth
+            required
+            value={policy.settings?.region}
+            onChange={(e) => setPolicy({ ...policy, settings: { ...policy.settings, region: e.target.value } })}
+          />
+          <NoMarginHelperText>{policyProps.regionCodeDes}</NoMarginHelperText>
         </SettingForm>
         <SettingForm title={t("policy.accessCredential")} lgWidth={12}>
           <FormControl fullWidth>

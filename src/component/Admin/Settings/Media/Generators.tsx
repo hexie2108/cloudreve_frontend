@@ -1,32 +1,19 @@
-import { useTranslation } from "react-i18next";
-import {
-  AccordionDetails,
-  Box,
-  FormControl,
-  FormControlLabel,
-  InputAdornment,
-  Typography,
-} from "@mui/material";
-import { isTrueVal } from "../../../../session/utils.ts";
-import {
-  AccordionSummary,
-  StyledAccordion,
-} from "../UserSession/SSOSettings.tsx";
 import { ExpandMoreRounded } from "@mui/icons-material";
-import {
-  DenseFilledTextField,
-  StyledCheckbox,
-} from "../../../Common/StyledComponents.tsx";
+import { LoadingButton } from "@mui/lab";
+import { AccordionDetails, Box, FormControl, FormControlLabel, InputAdornment, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { DefaultCloseAction } from "../../../Common/Snackbar/snackbar.tsx";
-import { NoMarginHelperText, SettingSectionContent } from "../Settings.tsx";
-import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
 import * as React from "react";
 import { useState } from "react";
-import { LoadingButton } from "@mui/lab";
-import { useAppDispatch } from "../../../../redux/hooks.ts";
+import { useTranslation } from "react-i18next";
 import { sendTestThumbGeneratorExecutable } from "../../../../api/api.ts";
+import { useAppDispatch } from "../../../../redux/hooks.ts";
+import { isTrueVal } from "../../../../session/utils.ts";
 import SizeInput from "../../../Common/SizeInput.tsx";
+import { DefaultCloseAction } from "../../../Common/Snackbar/snackbar.tsx";
+import { DenseFilledTextField, StyledCheckbox } from "../../../Common/StyledComponents.tsx";
+import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
+import { NoMarginHelperText, SettingSectionContent } from "../Settings.tsx";
+import { AccordionSummary, StyledAccordion } from "../UserSession/SSOSettings.tsx";
 
 export interface GeneratorsProps {
   values: {
@@ -84,6 +71,20 @@ const generators: GeneratorRenderProps[] = [
     ],
   },
   {
+    name: "libraw",
+    des: "librawDes",
+    enableFlag: "thumb_libraw_enabled",
+    maxSizeSetting: "thumb_libraw_max_size",
+    executableSetting: "thumb_libraw_path",
+    inputs: [
+      {
+        name: "thumb_libraw_exts",
+        label: "generatorExts",
+        des: "generatorExtsDes",
+      },
+    ],
+  },
+  {
     name: "vips",
     des: "vipsDes",
     enableFlag: "thumb_vips_enabled",
@@ -115,6 +116,11 @@ const generators: GeneratorRenderProps[] = [
         des: "ffmpegSeekDes",
         required: true,
       },
+      {
+        name: "thumb_ffmpeg_extra_args",
+        label: "ffmpegExtraArgs",
+        des: "ffmpegExtraArgsDes",
+      },
     ],
   },
   {
@@ -131,25 +137,23 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
   const [testing, setTesting] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleEnableChange =
-    (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSetting({
-        [name]: e.target.checked ? "1" : "0",
+  const handleEnableChange = (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSetting({
+      [name]: e.target.checked ? "1" : "0",
+    });
+    const newValues = { ...values, [name]: e.target.checked ? "1" : "0" };
+    if (
+      (newValues["thumb_libreoffice_enabled"] === "1" || newValues["thumb_music_cover_enabled"] === "1") &&
+      newValues["thumb_builtin_enabled"] === "0" &&
+      newValues["thumb_vips_enabled"] === "0"
+    ) {
+      enqueueSnackbar({
+        message: t("settings.thumbDependencyWarning"),
+        variant: "warning",
+        action: DefaultCloseAction,
       });
-      const newValues = { ...values, [name]: e.target.checked ? "1" : "0" };
-      if (
-        (newValues["thumb_libreoffice_enabled"] === "1" ||
-          newValues["thumb_music_cover_enabled"] === "1") &&
-        newValues["thumb_builtin_enabled"] === "0" &&
-        newValues["thumb_vips_enabled"] === "0"
-      ) {
-        enqueueSnackbar({
-          message: t("settings.thumbDependencyWarning"),
-          variant: "warning",
-          action: DefaultCloseAction,
-        });
-      }
-    };
+    }
+  };
 
   const doTest = (name: string, executable: string) => {
     setTesting(true);
@@ -205,12 +209,7 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
                         endAdornment: (
                           <InputAdornment position="end">
                             <LoadingButton
-                              onClick={() =>
-                                doTest(
-                                  g.name,
-                                  values[g.executableSetting ?? ""],
-                                )
-                              }
+                              onClick={() => doTest(g.name, values[g.executableSetting ?? ""])}
                               loading={testing}
                               color="primary"
                             >
@@ -225,9 +224,7 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
                         })
                       }
                     />
-                    <NoMarginHelperText>
-                      {t("settings.executableDes")}
-                    </NoMarginHelperText>
+                    <NoMarginHelperText>{t("settings.executableDes")}</NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
               )}
@@ -245,18 +242,12 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
                         })
                       }
                     />
-                    <NoMarginHelperText>
-                      {t("settings.thumbMaxSizeDes")}
-                    </NoMarginHelperText>
+                    <NoMarginHelperText>{t("settings.thumbMaxSizeDes")}</NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
               )}
               {g.inputs?.map((input) => (
-                <SettingForm
-                  key={input.name}
-                  lgWidth={12}
-                  title={t(`settings.${input.label}`)}
-                >
+                <SettingForm key={input.name} lgWidth={12} title={t(`settings.${input.label}`)}>
                   <FormControl fullWidth>
                     <DenseFilledTextField
                       value={values[input.name]}
@@ -267,9 +258,7 @@ const Generators = ({ values, setSetting }: GeneratorsProps) => {
                       }
                       required={!!input.required}
                     />
-                    <NoMarginHelperText>
-                      {t(`settings.${input.des}`)}
-                    </NoMarginHelperText>
+                    <NoMarginHelperText>{t(`settings.${input.des}`)}</NoMarginHelperText>
                   </FormControl>
                 </SettingForm>
               ))}

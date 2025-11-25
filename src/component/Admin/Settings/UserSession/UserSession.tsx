@@ -7,7 +7,7 @@ import SizeInput from "../../../Common/SizeInput.tsx";
 import { DenseFilledTextField, DenseSelect } from "../../../Common/StyledComponents.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
 import SettingForm, { ProChip } from "../../../Pages/Setting/SettingForm.tsx";
-import { Code } from "../../Common/Code.tsx";
+import { Code } from "../../../Common/Code.tsx";
 import GroupSelectionInput from "../../Common/GroupSelectionInput.tsx";
 import SharesInput from "../../Common/SharesInput.tsx";
 import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../Settings.tsx";
@@ -147,7 +147,7 @@ const UserSession = () => {
                   control={<Switch checked={false} />}
                   label={
                     <>
-                    {t("vas.disableSubAddressEmail")}
+                      {t("vas.disableSubAddressEmail")}
                       <ProChip label="Pro" color="primary" size="small" />
                     </>
                   }

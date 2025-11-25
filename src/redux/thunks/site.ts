@@ -1,7 +1,7 @@
-import { AppThunk } from "../store.ts";
 import { getSiteConfig } from "../../api/api.ts";
-import { applySetting } from "../siteConfigSlice.ts";
 import SessionManager from "../../session";
+import { applySetting } from "../siteConfigSlice.ts";
+import { AppThunk } from "../store.ts";
 
 export function loadSiteConfig(section: string): AppThunk {
   return async (dispatch, _getState) => {
@@ -12,10 +12,7 @@ export function loadSiteConfig(section: string): AppThunk {
         config: siteConfig,
       }),
     );
-    localStorage.setItem(
-      `siteConfigCache_${section}`,
-      JSON.stringify(siteConfig),
-    );
+    localStorage.setItem(`siteConfigCache_${section}`, JSON.stringify(siteConfig));
   };
 }
 

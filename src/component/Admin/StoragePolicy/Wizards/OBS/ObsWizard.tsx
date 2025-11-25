@@ -9,7 +9,7 @@ import { useAppDispatch } from "../../../../../redux/hooks";
 import { DefaultCloseAction } from "../../../../Common/Snackbar/snackbar";
 import { DenseFilledTextField, SecondaryButton } from "../../../../Common/StyledComponents";
 import SettingForm from "../../../../Pages/Setting/SettingForm";
-import { Code } from "../../../Common/Code";
+import { Code } from "../../../../Common/Code.tsx";
 import { EndpointInput } from "../../../Common/EndpointInput";
 import { NoMarginHelperText } from "../../../Settings/Settings";
 import { AddWizardProps } from "../../AddWizardDialog";
@@ -36,6 +36,7 @@ const ObsWizard = ({ onSubmit }: AddWizardProps) => {
       media_meta_exts: ["png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff"],
       media_meta_generator_proxy: true,
       thumb_generator_proxy: true,
+      chunk_concurrency: 3,
     },
     file_name_rule: "{uuid}_{originname}",
     edges: {},

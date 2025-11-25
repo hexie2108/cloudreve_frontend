@@ -1,8 +1,8 @@
+import { Box, Grid, Stack, styled, Typography } from "@mui/material";
 import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Grid, Stack, styled, Typography } from "@mui/material";
-import { useAppSelector } from "../../../../redux/hooks.ts";
 import { FileResponse, FileType } from "../../../../api/explorer.ts";
+import { useAppSelector } from "../../../../redux/hooks.ts";
 import DndWrappedFile from "../../Dnd/DndWrappedFile.tsx";
 
 import { FmIndexContext } from "../../FmIndexContext.tsx";
@@ -44,21 +44,11 @@ export const loadingPlaceHolderNumb = 3;
 const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
   const { t } = useTranslation("application");
   const fmIndex = useContext(FmIndexContext);
-  const files = useAppSelector(
-    (state) => state.fileManager[fmIndex].list?.files,
-  );
-  const mixedType = useAppSelector(
-    (state) => state.fileManager[fmIndex].list?.mixed_type,
-  );
-  const pagination = useAppSelector(
-    (state) => state.fileManager[fmIndex].list?.pagination,
-  );
-  const showThumb = useAppSelector(
-    (state) => state.fileManager[fmIndex].showThumb,
-  );
-  const search_params = useAppSelector(
-    (state) => state.fileManager[fmIndex]?.search_params,
-  );
+  const files = useAppSelector((state) => state.fileManager[fmIndex].list?.files);
+  const mixedType = useAppSelector((state) => state.fileManager[fmIndex].list?.mixed_type);
+  const pagination = useAppSelector((state) => state.fileManager[fmIndex].list?.pagination);
+  const showThumb = useAppSelector((state) => state.fileManager[fmIndex].showThumb);
+  const search_params = useAppSelector((state) => state.fileManager[fmIndex]?.search_params);
   const list = useMemo(() => {
     const list: listComponents = {
       Files: [],
@@ -115,9 +105,7 @@ const GridView = React.forwardRef(({ ...rest }: GridViewProps, ref) => {
             </GridItem>
           );
           const _ =
-            list.Files.length > 0
-              ? list.Files.push(loadingPlaceholder)
-              : list.Folders?.push(loadingPlaceholder);
+            list.Files.length > 0 ? list.Files.push(loadingPlaceholder) : list.Folders?.push(loadingPlaceholder);
         }
       }
     }

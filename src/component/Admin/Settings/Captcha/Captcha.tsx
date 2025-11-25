@@ -1,27 +1,14 @@
-import { useTranslation } from "react-i18next";
-import * as React from "react";
+import { Box, Collapse, FormControl, FormControlLabel, ListItemText, Stack, Switch, Typography } from "@mui/material";
 import { useContext } from "react";
-import { SettingContext } from "../SettingWrapper.tsx";
-import {
-  Box,
-  Collapse,
-  FormControl,
-  FormControlLabel,
-  ListItemText,
-  Stack,
-  Switch,
-  Typography,
-} from "@mui/material";
-import {
-  NoMarginHelperText,
-  SettingSection,
-  SettingSectionContent,
-} from "../Settings.tsx";
-import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
+import { useTranslation } from "react-i18next";
+import { CaptchaType } from "../../../../api/site.ts";
 import { isTrueVal } from "../../../../session/utils.ts";
 import { DenseSelect } from "../../../Common/StyledComponents.tsx";
 import { SquareMenuItem } from "../../../FileManager/ContextMenu/ContextMenu.tsx";
-import { CaptchaType } from "../../../../api/site.ts";
+import SettingForm from "../../../Pages/Setting/SettingForm.tsx";
+import { NoMarginHelperText, SettingSection, SettingSectionContent } from "../Settings.tsx";
+import { SettingContext } from "../SettingWrapper.tsx";
+import CapCaptcha from "./CapCaptcha.tsx";
 import GraphicCaptcha from "./GraphicCaptcha.tsx";
 import ReCaptcha from "./ReCaptcha.tsx";
 import TurnstileCaptcha from "./TurnstileCaptcha.tsx";
@@ -53,9 +40,7 @@ const Captcha = () => {
                   }
                   label={t("settings.captchaForLogin")}
                 />
-                <NoMarginHelperText>
-                  {t("settings.captchaForLoginDes")}
-                </NoMarginHelperText>
+                <NoMarginHelperText>{t("settings.captchaForLoginDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
             <SettingForm lgWidth={5}>
@@ -73,9 +58,7 @@ const Captcha = () => {
                   }
                   label={t("settings.captchaForSignup")}
                 />
-                <NoMarginHelperText>
-                  {t("settings.captchaForSignupDes")}
-                </NoMarginHelperText>
+                <NoMarginHelperText>{t("settings.captchaForSignupDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
             <SettingForm lgWidth={5}>
@@ -93,9 +76,7 @@ const Captcha = () => {
                   }
                   label={t("settings.captchaForReset")}
                 />
-                <NoMarginHelperText>
-                  {t("settings.captchaForResetDes")}
-                </NoMarginHelperText>
+                <NoMarginHelperText>{t("settings.captchaForResetDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
           </SettingSectionContent>
@@ -116,49 +97,56 @@ const Captcha = () => {
                   value={values.captcha_type}
                 >
                   <SquareMenuItem value={CaptchaType.NORMAL}>
-                    <ListItemText slotProps={{
-                      primary: { variant: "body2" }
-                    }}>
+                    <ListItemText
+                      slotProps={{
+                        primary: { variant: "body2" },
+                      }}
+                    >
                       {t("settings.plainCaptcha")}
                     </ListItemText>
                   </SquareMenuItem>
                   <SquareMenuItem value={CaptchaType.RECAPTCHA}>
-                    <ListItemText slotProps={{
-                      primary: { variant: "body2" }
-                    }}>
+                    <ListItemText
+                      slotProps={{
+                        primary: { variant: "body2" },
+                      }}
+                    >
                       {t("settings.reCaptchaV2")}
                     </ListItemText>
                   </SquareMenuItem>
                   <SquareMenuItem value={CaptchaType.TURNSTILE}>
-                    <ListItemText slotProps={{
-                      primary: { variant: "body2" }
-                    }}>
+                    <ListItemText
+                      slotProps={{
+                        primary: { variant: "body2" },
+                      }}
+                    >
                       {t("settings.turnstile")}
                     </ListItemText>
                   </SquareMenuItem>
+                  <SquareMenuItem value={CaptchaType.CAP}>
+                    <ListItemText
+                      slotProps={{
+                        primary: { variant: "body2" },
+                      }}
+                    >
+                      {t("settings.cap")}
+                    </ListItemText>
+                  </SquareMenuItem>
                 </DenseSelect>
-                <NoMarginHelperText>
-                  {t("settings.captchaTypeDes")}
-                </NoMarginHelperText>
+                <NoMarginHelperText>{t("settings.captchaTypeDes")}</NoMarginHelperText>
               </FormControl>
             </SettingForm>
-            <Collapse
-              in={values.captcha_type === CaptchaType.NORMAL}
-              unmountOnExit
-            >
+            <Collapse in={values.captcha_type === CaptchaType.NORMAL} unmountOnExit>
               <GraphicCaptcha setSettings={setSettings} values={values} />
             </Collapse>
-            <Collapse
-              in={values.captcha_type === CaptchaType.RECAPTCHA}
-              unmountOnExit
-            >
+            <Collapse in={values.captcha_type === CaptchaType.RECAPTCHA} unmountOnExit>
               <ReCaptcha setSettings={setSettings} values={values} />
             </Collapse>
-            <Collapse
-              in={values.captcha_type === CaptchaType.TURNSTILE}
-              unmountOnExit
-            >
+            <Collapse in={values.captcha_type === CaptchaType.TURNSTILE} unmountOnExit>
               <TurnstileCaptcha setSettings={setSettings} values={values} />
+            </Collapse>
+            <Collapse in={values.captcha_type === CaptchaType.CAP} unmountOnExit>
+              <CapCaptcha setSettings={setSettings} values={values} />
             </Collapse>
           </SettingSectionContent>
         </SettingSection>

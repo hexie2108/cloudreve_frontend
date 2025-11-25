@@ -97,7 +97,7 @@ const Home = () => {
         existingUrls={summary?.site_urls ?? []}
       />
       <Container maxWidth="xl">
-        <PageHeader title={t("dashboard:nav.summary")} />
+        <PageHeader title={t("nav.summary")} />
         <Grid container spacing={3}>
           <Grid alignContent={"stretch"} item xs={12} md={8} lg={9}>
             <StyledPaper>
@@ -135,19 +135,31 @@ const Home = () => {
                           height={350}
                           data={summary?.metrics_summary.dates.map((i, d) => ({
                             name: dayjs(i).format("MM-DD"),
-                            file: summary?.metrics_summary?.files[d] ?? 0,
                             user: summary?.metrics_summary?.users[d] ?? 0,
+                            file: summary?.metrics_summary?.files[d] ?? 0,
                             share: summary?.metrics_summary?.shares[d] ?? 0,
                           }))}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
-                          <YAxis allowDecimals={false} />
+                          <YAxis
+                            allowDecimals={false}
+                            width={(() => {
+                              const yAxisValue = [
+                                ...(summary?.metrics_summary?.users ?? []),
+                                ...(summary?.metrics_summary?.files ?? []),
+                                ...(summary?.metrics_summary?.shares ?? []),
+                              ];
+                              const yAxisUpperLimit = yAxisValue.length ? Math.max(...yAxisValue) / 0.8 - 1 : 0;
+                              const yAxisDigits = yAxisUpperLimit > 1 ? Math.floor(Math.log10(yAxisUpperLimit)) + 1 : 1;
+                              return 3 + yAxisDigits * 9;
+                            })()}
+                          />
                           <Tooltip />
                           <Legend />
-                          <Line name={t("nav.files")} type="monotone" dataKey="file" stroke="#3f51b5" />
-                          <Line name={t("nav.users")} type="monotone" dataKey="user" stroke="#82ca9d" />
-                          <Line name={t("nav.shares")} type="monotone" dataKey="share" stroke="#e91e63" />
+                          <Line name={t("nav.users")} type="monotone" dataKey="user" stroke={blue[600]} />
+                          <Line name={t("nav.files")} type="monotone" dataKey="file" stroke={yellow[800]} />
+                          <Line name={t("nav.shares")} type="monotone" dataKey="share" stroke={green[800]} />
                         </LineChart>
                       </ResponsiveContainer>
                     )}
@@ -225,7 +237,7 @@ const Home = () => {
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
-                            secondary={t("summary.totalFiles")}
+                            secondary={t("summary.totalFilesAndFolders")}
                             primary={summary.metrics_summary.file_total.toLocaleString()}
                           />
                         </ListItem>
@@ -330,7 +342,7 @@ const Home = () => {
                   <ListItemIcon>
                     <GitHub />
                   </ListItemIcon>
-                  <ListItemText primary={t("GitHub")} />
+                  <ListItemText primary={t("summary.github")} />
                   <StyledListItemIcon>
                     <OpenFilled />
                   </StyledListItemIcon>
@@ -362,7 +374,7 @@ const Home = () => {
                     <OpenFilled />
                   </StyledListItemIcon>
                 </ListItemButton>
-                <ListItemButton onClick={() => window.open("https://github.com/cloudreve/Cloudreve/discussions")}>
+                <ListItemButton onClick={() => window.open("https://github.com/cloudreve/cloudreve/discussions")}>
                   <ListItemIcon>
                     <CommentMultiple />
                   </ListItemIcon>
@@ -391,7 +403,7 @@ const Home = () => {
               <Divider sx={{ mb: 2, mt: 1 }} />
               <Giscus
                 id="comments"
-                repo="cloudreve/Cloudreve"
+                repo="cloudreve/cloudreve"
                 repoId="MDEwOlJlcG9zaXRvcnkxMjAxNTYwNzY="
                 mapping={"number"}
                 term={i18next.language == "zh-CN" ? "2170" : "2169"}

@@ -1,5 +1,6 @@
 import EntitySetting from "./Entity/EntitySetting";
 import FileSetting from "./File/FileSetting";
+import FileSystem from "./FileSystem/Filesystem";
 import EditGroup from "./Group/EditGroup/EditGroup";
 import GroupSetting from "./Group/GroupSetting";
 import Home from "./Home/Home";
@@ -19,6 +20,7 @@ export {
   EditStoragePolicy,
   EntitySetting,
   FileSetting,
+  FileSystem,
   GroupSetting,
   Home,
   NodeSetting,
