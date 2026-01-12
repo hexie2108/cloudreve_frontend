@@ -59,7 +59,7 @@ function print_vpn_image() {
       break;
     //显示千速喵广告
     case 1:
-      link = "https://qoxom.cc/#/register?code=MGIBvSHq";
+      link = "https://liltpupu.top/#/register?code=MGIBvSHq";
       img = "https://cdn2.mikuclub.fun/img/charge/banner_pc_tsmeow.webp";
       img_phone = "https://cdn2.mikuclub.fun/img/charge/banner_phone_tsmeow.webp";
       break;
