@@ -53,7 +53,7 @@ function print_vpn_image() {
   switch (index) {
     //显示vmssr广告
     case 0:
-      link = "https://www.vmssr.net/#/register?code=K2mMFj4g";
+      link = "https://www.vmssr.org/#/register?code=K2mMFj4g";
       img = "https://cdn2.mikuclub.fun/img/charge/banner_pc_vmrss.webp";
       img_phone = "https://cdn2.mikuclub.fun/img/charge/banner_phone_vmrss.webp";
       break;
