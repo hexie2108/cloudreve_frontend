@@ -73,7 +73,7 @@ define(["./workbox-e3490c72"], function (s) {
         { url: "index.html", revision: "1993dc5767265ba9e15ffbd566ad8f00" },
         { url: "pdfviewer.html", revision: "2106674c481662642880e4bdd214680c" },
         { url: "service-worker.js", revision: "241e60b2365ef9100734b97976b7dc4c" },
-        { url: "static/js/script.js", revision: "ef949ff77be0906b2754a1adef3131dd" },
+        { url: "static/js/script.js", revision: "15e567bd2c316eb6ac33e32fdc25214c" },
       ],
       {},
     ),
