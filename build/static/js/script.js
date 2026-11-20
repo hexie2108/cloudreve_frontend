@@ -53,15 +53,15 @@ function print_vpn_image() {
   switch (index) {
     //显示vmssr广告
     case 0:
-      link = "https://www.vmssr.org/#/register?code=K2mMFj4g";
-      img = "http://storage.mikupan.vip/img/charge/banner_pc_vmrss.webp";
-      img_phone = "http://storage.mikupan.vip/img/charge/banner_phone_vmrss.webp";
+      link = "https://www.vmssr.net/#/register?code=K2mMFj4g";
+      img = "https://article.biliimg.com/bfs/new_dyn/8c1ff7f282d1ededa872f5c1233702c4277257.jpg@.webp";
+      img_phone = "https://article.biliimg.com/bfs/new_dyn/84119c39df52b2d329eaf925e2d60a8e277257.jpg@.webp";
       break;
     //显示千速喵广告
     case 1:
-      link = "https://eueua.top/#/register?code=ShZKi2js";
-      img = "http://storage.mikupan.vip/img/charge/banner_pc_tsmeow.webp";
-      img_phone = "http://storage.mikupan.vip/img/charge/banner_phone_tsmeow.webp";
+      link = "https://qoxom.cc/#/register?code=MGIBvSHq";
+      img = "https://cdn2.mikuclub.fun/img/charge/banner_pc_tsmeow.webp";
+      img_phone = "https://cdn2.mikuclub.fun/img/charge/banner_phone_tsmeow.webp";
       break;
   }
 
